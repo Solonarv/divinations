@@ -1,0 +1,16 @@
+[
+{
+  "modid": "divinations",
+  "name": "Divinations",
+  "description": "Magical divinations to help you find things.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Solonarv"],
+  "credits": "Created by Solonarv",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
