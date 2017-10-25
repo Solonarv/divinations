@@ -17,37 +17,37 @@ import solonarv.mods.divinations.common.core.DivinationsCreativeTab;
 import java.util.List;
 
 import solonarv.mods.divinations.common.constants.Misc;
+import solonarv.mods.divinations.common.item.base.ItemMod;
 
-public class ItemPigFinder extends Item {
+import javax.annotation.Nonnull;
+
+public class ItemPigFinder extends ItemMod {
 
     public static final int SEARCH_RADIUS = 32;
     private static final Vec3d aabbOffset = new Vec3d(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS);
 
     public ItemPigFinder() {
-        super();
-        setCreativeTab(DivinationsCreativeTab.instance);
-        setMaxStackSize(1);
-        setUnlocalizedName("pig_finder");
-        setRegistryName(Misc.MOD_ID, "pig_finder");
-        System.out.println("Created pig_finder item");
+        super("pig_finder");
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
-        Vec3d position = playerIn.getPositionVector();
+    @Nonnull
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, @Nonnull EnumHand handIn) {
+        if (!worldIn.isRemote) {
+            Vec3d position = playerIn.getPositionVector();
 
-        Vec3d minCorner = position.subtract(aabbOffset);
-        Vec3d maxCorner = position.add(aabbOffset);
-        AxisAlignedBB box = new AxisAlignedBB(minCorner, maxCorner);
+            Vec3d minCorner = position.subtract(aabbOffset);
+            Vec3d maxCorner = position.add(aabbOffset);
+            AxisAlignedBB box = new AxisAlignedBB(minCorner, maxCorner);
 
-        Predicate<EntityPig> filter = EntitySelectors.withinRange(position.x, position.y, position.z, SEARCH_RADIUS);
+            Predicate<EntityPig> filter = EntitySelectors.withinRange(position.x, position.y, position.z, SEARCH_RADIUS);
 
-        List<EntityPig> pigs = worldIn.getEntitiesWithinAABB(EntityPig.class, box, filter);
+            List<EntityPig> pigs = worldIn.getEntitiesWithinAABB(EntityPig.class, box, filter);
 
-        for (EntityPig pig: pigs) {
-            playerIn.sendMessage(new TextComponentString(pig.toString()));
+            for (EntityPig pig : pigs) {
+                playerIn.sendMessage(new TextComponentString(pig.toString()));
+            }
         }
-
         return new ActionResult<>(EnumActionResult.SUCCESS, playerIn.getHeldItem(handIn));
     }
 }
