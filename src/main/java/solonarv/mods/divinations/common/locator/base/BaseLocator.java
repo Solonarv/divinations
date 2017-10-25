@@ -1,19 +1,20 @@
-package solonarv.mods.divinations.common.locator;
+package solonarv.mods.divinations.common.locator.base;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public abstract class LocatorFactory implements IForgeRegistryEntry<LocatorFactory> {
+public abstract class BaseLocator implements IForgeRegistryEntry<BaseLocator> {
 
     private ResourceLocation registryName;
 
-    public abstract ILocator fromNBT(NBTTagCompound tag);
+    public abstract IConcreteLocator fromNBT(@Nonnull NBTTagCompound tag);
 
     @Override
-    public LocatorFactory setRegistryName(ResourceLocation name) {
+    public BaseLocator setRegistryName(ResourceLocation name) {
         this.registryName = name;
         return this;
     }
@@ -25,7 +26,7 @@ public abstract class LocatorFactory implements IForgeRegistryEntry<LocatorFacto
     }
 
     @Override
-    public Class<LocatorFactory> getRegistryType() {
-        return LocatorFactory.class;
+    public Class<BaseLocator> getRegistryType() {
+        return BaseLocator.class;
     }
 }
