@@ -6,14 +6,17 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.registries.IForgeRegistry;
+import solonarv.mods.divinations.common.item.ItemBlockLocator;
 import solonarv.mods.divinations.common.item.ItemPigFinder;
 
 @Mod.EventBusSubscriber
 public class ModItems {
     public static ItemPigFinder pigFinder;
+    public static ItemBlockLocator blockLocator;
 
     public static void preInit(){
         pigFinder = new ItemPigFinder();
+        blockLocator = new ItemBlockLocator();
     }
 
     @SubscribeEvent
@@ -22,6 +25,6 @@ public class ModItems {
         if (pigFinder == null) {
             System.err.println("pig_finder is null; was PreInit skipped???");
         }
-        event.getRegistry().registerAll(pigFinder);
+        event.getRegistry().registerAll(pigFinder, blockLocator);
     }
 }
