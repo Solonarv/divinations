@@ -2,6 +2,7 @@ package solonarv.mods.divinations.common.locator.consumer;
 
 import net.minecraft.util.ResourceLocation;
 import solonarv.mods.divinations.common.constants.Misc;
+import solonarv.mods.divinations.common.lib.Util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,17 +19,21 @@ public class Consumers {
 
     public static void registerConsumer(ResourceLocation id, IConsumer consumer) {
         if (consumers.containsKey(id))
-            throw new IllegalStateException(String.format("Attempted to register filter %s as %s, but that ID is already in use!", consumer, id));
+            throw new IllegalStateException(String.format("Attempted to register consumer %s as %s, but that ID is already in use!", consumer, id));
         if (consumers.containsValue(consumer))
-            throw new IllegalStateException(String.format("Attempted to register filter %s as %s, but that class is already registered!", consumer, id));
+            throw new IllegalStateException(String.format("Attempted to register consumer %s as %s, but that class is already registered!", consumer, id));
         consumers.put(id, consumer);
     }
 
     public static void registerConsumer(String id, IConsumer consumer) {
-        String[] split = ResourceLocation.splitObjectName(id);
-        if (split[0] == null) {
-            split[0] = Misc.MOD_ID;
-        }
-        registerConsumer(new ResourceLocation(split[0], split[1]), consumer);
+        registerConsumer(Util.resourceLocationWithDefaultDomain(id), consumer);
+    }
+
+    public static IConsumer getConsumerByID(ResourceLocation id){
+        return consumers.get(id);
+    }
+
+    public static IConsumer fromString(String id) {
+        return getConsumerByID(Util.resourceLocationWithDefaultDomain(id));
     }
 }

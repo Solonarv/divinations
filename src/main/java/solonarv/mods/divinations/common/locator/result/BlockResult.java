@@ -5,6 +5,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 
 import javax.annotation.Nullable;
 
@@ -48,5 +49,10 @@ public class BlockResult implements ILocatorResult {
 
     public BlockPos getBlockPos() {
         return location;
+    }
+
+    @Override
+    public String toString(){
+        return blockState.toString() + " at xyz=[" + location.getX() + ", " + location.getY() + ", " + location.getZ() + "].";
     }
 }

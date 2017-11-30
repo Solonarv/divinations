@@ -21,6 +21,6 @@ public abstract class BaseLocator<T extends ILocatorResult> {
     }
 
     public List<T> findResults(World world, Vec3d position, EntityPlayer user, List<IFilter<? super T>> filters) {
-        return findResults(world, position, user, filters.stream().reduce(Filters.ALL, Filters::and));
+        return findResults(world, position, user, Filters.combineAll(filters));
     }
 }

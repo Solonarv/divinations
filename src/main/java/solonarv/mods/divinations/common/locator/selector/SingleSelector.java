@@ -12,8 +12,8 @@ public abstract class SingleSelector<T extends ILocatorResult> implements ISelec
 
     @Override
     public final List<T> select(World world, Vec3d position, EntityPlayer user, List<T> candidates) {
-        return Collections.singletonList(selectSingle());
+        return Collections.singletonList(selectSingle(world, position, user, candidates));
     }
 
-    public abstract T selectSingle();
+    public abstract T selectSingle(World world, Vec3d position, EntityPlayer user, List<T> candidates);
 }
