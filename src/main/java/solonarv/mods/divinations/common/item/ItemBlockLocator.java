@@ -48,6 +48,7 @@ public class ItemBlockLocator extends ItemMod {
 
             NBTTagList filterNBT = nbt.getTagList("filters", Constants.NBT.TAG_COMPOUND);
 
+            // TODO fix this wonky type stuff. See also Filters::fromNBT's return type.
             // java type system PLEASASJEBDRPOEADI*UYGVEIADO&*YGV:P
             List<IFilter<? super BlockResult>> filters = (List<IFilter<? super BlockResult>>) (List) Filters.fromNBT(filterNBT);
 
