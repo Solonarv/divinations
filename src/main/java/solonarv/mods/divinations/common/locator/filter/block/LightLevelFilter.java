@@ -1,5 +1,6 @@
 package solonarv.mods.divinations.common.locator.filter.block;
 
+import jdk.nashorn.internal.ir.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
@@ -8,10 +9,11 @@ import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import solonarv.mods.divinations.common.lib.IFactoryNBT;
 import solonarv.mods.divinations.common.lib.Util;
+import solonarv.mods.divinations.common.locator.filter.AbstractFilter;
 import solonarv.mods.divinations.common.locator.filter.IFilter;
 import solonarv.mods.divinations.common.locator.result.BlockResult;
 
-public class LightLevelFilter implements IFilter<BlockResult> {
+public class LightLevelFilter extends AbstractFilter<BlockResult> {
     private final byte minLight;
     private final byte maxLight;
     private final boolean reversed;
@@ -31,6 +33,11 @@ public class LightLevelFilter implements IFilter<BlockResult> {
         boolean inRange = lightLevel <= maxLight && lightLevel >= minLight;
 
         return inRange ^ reversed;
+    }
+
+    @Override
+    public Class<BlockResult> getInputClass() {
+        return BlockResult.class;
     }
 
     public static final ResourceLocation id = Util.resourceLocationWithDefaultDomain("lightLevel");

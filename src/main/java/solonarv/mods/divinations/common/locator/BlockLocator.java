@@ -28,4 +28,9 @@ public class BlockLocator extends BaseLocator<BlockResult> {
 
         return Iterables.transform(BlockPos.getAllInBox(minCorner, maxCorner), bp -> new BlockResult(world, bp));
     }
+
+    @Override
+    public Class getInputClass() {
+        return BlockResult.class;
+    }
 }

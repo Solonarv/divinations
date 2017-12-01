@@ -9,7 +9,7 @@ import solonarv.mods.divinations.common.util.ChatUtil;
 
 import java.util.List;
 
-public class ChatConsumer implements IConsumer<ILocatorResult>{
+public class ChatConsumer extends AbstractConsumer<ILocatorResult> {
 
     private ChatConsumer(){}
 
@@ -18,6 +18,11 @@ public class ChatConsumer implements IConsumer<ILocatorResult>{
     @Override
     public void useResults(World world, Vec3d position, EntityPlayer user, List<ILocatorResult> results) {
         for (ILocatorResult result : results)
-            ChatUtil.sendMessageUnlocalized(user, result.toString(), TextFormatting.GREEN);
+            ChatUtil.sendMessageUnlocalized(user, "Found " +  result.toString(), TextFormatting.GREEN);
+    }
+
+    @Override
+    public Class<ILocatorResult> getInputClass() {
+        return ILocatorResult.class;
     }
 }

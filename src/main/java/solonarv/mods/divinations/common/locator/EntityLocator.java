@@ -49,6 +49,11 @@ public class EntityLocator<E extends Entity> extends BaseLocator<EntityResult<E>
     @Override
     public List<EntityResult<E>> findResultsRaw(World world, Vec3d position, @Nullable EntityPlayer user) {
         AxisAlignedBB aabb = new AxisAlignedBB(position.subtract(AABB_OFFSET), position.add(AABB_OFFSET));
-        return world.getEntitiesWithinAABB(entityType, aabb).stream().map(ety -> new EntityResult<>(ety)).collect(Collectors.toList());
+        return world.getEntitiesWithinAABB(entityType, aabb).stream().map(EntityResult::new).collect(Collectors.toList());
+    }
+
+    @Override
+    public Class getInputClass() {
+        return EntityResult.class;
     }
 }

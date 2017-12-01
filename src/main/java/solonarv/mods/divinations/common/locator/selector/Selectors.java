@@ -5,6 +5,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import solonarv.mods.divinations.common.lib.Util;
+import solonarv.mods.divinations.common.locator.result.BlockResult;
 import solonarv.mods.divinations.common.locator.result.ILocatorResult;
 
 import java.util.Collections;
@@ -13,19 +14,19 @@ import java.util.List;
 import java.util.Map;
 
 public class Selectors {
-    private static Map<ResourceLocation, ISelector<? extends ILocatorResult>> selectors = new HashMap<>();
+    private static Map<ResourceLocation, ISelector<ILocatorResult>> selectors = new HashMap<>();
     private static boolean initDone = false;
 
-    public static final ISelector NONE = (world, position, user, candidates) -> Collections.emptyList();
-    public static final ISelector ALL = (world, position, user, candidates) -> candidates;
-    public static final ISelector<? extends  ILocatorResult> RANDOM = new SingleSelector<ILocatorResult>() {
+    public static final ISelector NONE = AbstractSelector.makeSelector(ILocatorResult.class,(world, position, user, candidates) -> Collections.emptyList());
+    public static final ISelector ALL = AbstractSelector.makeSelector(ILocatorResult.class, (world, position, user, candidates) -> candidates);
+    public static final ISelector<? extends  ILocatorResult> RANDOM = AbstractSelector.makeSelector(ILocatorResult.class, new SingleSelector<ILocatorResult>() {
         @Override
         public ILocatorResult selectSingle(World world, Vec3d position, EntityPlayer user, List<ILocatorResult> candidates) {
             int index = user.getRNG().nextInt(candidates.size());
             return candidates.get(index);
         }
-    };
-    public static final ISelector<? extends ILocatorResult> NEAREST = new SingleSelector<ILocatorResult>() {
+    });
+    public static final ISelector<? extends ILocatorResult> NEAREST = AbstractSelector.makeSelector(ILocatorResult.class, new SingleSelector<ILocatorResult>() {
         @Override
         public ILocatorResult selectSingle(World world, Vec3d position, EntityPlayer user, List<ILocatorResult> candidates) {
             double nearestDist = Double.POSITIVE_INFINITY;
@@ -39,9 +40,9 @@ public class Selectors {
             }
             return nearest;
         }
-    };
+    });
 
-    public static final ISelector<? extends ILocatorResult> FURTHEST = new SingleSelector<ILocatorResult>() {
+    public static final ISelector<? extends ILocatorResult> FURTHEST = AbstractSelector.makeSelector(ILocatorResult.class, new SingleSelector<ILocatorResult>() {
         @Override
         public ILocatorResult selectSingle(World world, Vec3d position, EntityPlayer user, List<ILocatorResult> candidates) {
             double nearestDist = Double.NEGATIVE_INFINITY;
@@ -55,7 +56,7 @@ public class Selectors {
             }
             return furthest;
         }
-    };
+    });
 
     public static void init() {
         if (initDone)
@@ -68,21 +69,30 @@ public class Selectors {
         initDone = true;
     }
 
+    // The unchecked cast is a) safe (since we're just dumping the argument into a map), and b) needed
+    // because the map is sort-of heterogenous.
+    @SuppressWarnings("unchecked")
     public static void registerSelector(ResourceLocation id, ISelector<? extends  ILocatorResult> selector) {
         if (selectors.containsKey(id))
             throw new IllegalStateException(String.format("Attempted to register selector %s as %s, but that ID is already in use!", selector, id));
+        //noinspection SuspiciousMethodCalls
         if (selectors.containsValue(selector))
             throw new IllegalStateException(String.format("Attempted to register selector %s as %s, but that selector is already registered!", selector, id));
-        selectors.put(id, selector);
+        selectors.put(id, (ISelector<ILocatorResult>) selector);
     }
 
-    public static ISelector<? extends ILocatorResult> fromString(String str) {
+    public static <T extends ILocatorResult> ISelector<T> fromString(String str, Class<T> cls) {
         System.out.println("Retrieving selector from string " + str);
-        return getSelectorFromID(Util.resourceLocationWithDefaultDomain(str));
+        return getSelectorFromID(Util.resourceLocationWithDefaultDomain(str), cls);
     }
 
-    public static ISelector<? extends ILocatorResult> getSelectorFromID(ResourceLocation id) {
+    // See comments on Filters::fromNBT
+    @SuppressWarnings("unchecked")
+    public static <T extends ILocatorResult> ISelector<T> getSelectorFromID(ResourceLocation id, Class<T> cls) {
         System.out.println("Retrieving selector with ID " + id);
-        return selectors.get(id);
+        ISelector<ILocatorResult> selector = selectors.get(id);
+        if (selector != null && selector.canActOnClass(cls))
+            return (ISelector<T>) selector;
+        return null;
     }
 }

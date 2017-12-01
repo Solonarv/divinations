@@ -8,7 +8,7 @@ import solonarv.mods.divinations.common.locator.result.ILocatorResult;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class SingleSelector<T extends ILocatorResult> implements ISelector<T> {
+public abstract class SingleSelector<T extends ILocatorResult> implements ISimpleSelector<T> {
 
     @Override
     public final List<T> select(World world, Vec3d position, EntityPlayer user, List<T> candidates) {
