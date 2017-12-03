@@ -1,8 +1,8 @@
 [
 {
-  "modid": "divinations",
-  "name": "Divinations",
-  "description": "Magical divinations to help you find things.",
+  "modid": "thegreatweb",
+  "name": "The Great Web",
+  "description": "Reach through the Web, and see.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",

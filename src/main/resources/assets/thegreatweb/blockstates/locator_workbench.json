@@ -1,0 +1,11 @@
+{
+  "forge_marker": 1,
+  "defaults": {
+    "model": "cube_all",
+    "textures": { "all":"thegreatweb:blocks/locator_workbench"}
+  },
+  "variants": {
+    "normal": [{}],
+    "inventory": [{}]
+  }
+}

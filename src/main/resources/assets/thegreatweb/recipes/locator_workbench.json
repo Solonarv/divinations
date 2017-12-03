@@ -1,0 +1,19 @@
+{
+  "result": {
+    "item": "thegreatweb:locator_workbench"
+  },
+  "pattern": [
+    "e",
+    "c"
+  ],
+  "type": "forge:ore_shaped",
+  "key": {
+    "e": {
+      "item": "minecraft:ender_eye"
+    },
+    "c": {
+      "type": "forge:ore_dict",
+      "ore": "workbench"
+    }
+  }
+}

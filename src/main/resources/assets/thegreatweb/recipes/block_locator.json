@@ -1,0 +1,28 @@
+{
+  "result": {
+    "item": "thegreatweb:block_locator"
+  },
+  "pattern": [
+    "rsg",
+    "ses",
+    "gsr"
+  ],
+  "type": "forge:ore_shaped",
+  "key": {
+    "r": {
+      "type": "forge:ore_dict",
+      "ore": "dustRedstone"
+    },
+    "s": {
+      "type": "forge:ore_dict",
+      "ore": "stone"
+    },
+    "g": {
+      "type": "forge:ore_dict",
+      "ore": "dustGlowstone"
+    },
+    "e": {
+      "item": "minecraft:ender_eye"
+    }
+  }
+}
