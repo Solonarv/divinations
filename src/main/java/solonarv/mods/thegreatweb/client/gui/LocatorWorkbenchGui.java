@@ -7,8 +7,8 @@ import solonarv.mods.thegreatweb.common.gui.ContainerLocatorWorkbench;
 import solonarv.mods.thegreatweb.common.lib.Util;
 
 public class LocatorWorkbenchGui extends GuiContainer {
-    public static final int WIDTH = 180;
-    public static final int HEIGHT = 152;
+    public static final int WIDTH = 176;
+    public static final int HEIGHT = 166;
 
     private static final ResourceLocation background = Util.withModID("textures/gui/locator_workbench.png");
 
