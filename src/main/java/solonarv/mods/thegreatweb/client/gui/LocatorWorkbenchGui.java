@@ -7,8 +7,8 @@ import solonarv.mods.thegreatweb.common.gui.ContainerLocatorWorkbench;
 import solonarv.mods.thegreatweb.common.lib.Util;
 
 public class LocatorWorkbenchGui extends GuiContainer {
-    public static final int WIDTH = 176;
-    public static final int HEIGHT = 166;
+    public static final int WIDTH = 256;
+    public static final int HEIGHT = 256;
 
     private static final ResourceLocation background = Util.withModID("textures/gui/locator_workbench.png");
 
@@ -17,6 +17,13 @@ public class LocatorWorkbenchGui extends GuiContainer {
 
         xSize = WIDTH;
         ySize = HEIGHT;
+    }
+
+    @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        this.drawDefaultBackground();
+        super.drawScreen(mouseX, mouseY, partialTicks);
+        this.renderHoveredToolTip(mouseX, mouseY);
     }
 
     @Override
