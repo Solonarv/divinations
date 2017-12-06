@@ -82,14 +82,12 @@ public class Selectors {
     }
 
     public static <T extends ILocatorResult> ISelector<T> fromString(String str, Class<T> cls) {
-        System.out.println("Retrieving selector from string " + str);
         return getSelectorFromID(Util.resourceLocationWithDefaultDomain(str), cls);
     }
 
     // See comments on Filters::fromNBT
     @SuppressWarnings("unchecked")
     public static <T extends ILocatorResult> ISelector<T> getSelectorFromID(ResourceLocation id, Class<T> cls) {
-        System.out.println("Retrieving selector with ID " + id);
         ISelector<ILocatorResult> selector = selectors.get(id);
         if (selector != null && selector.canActOnClass(cls))
             return (ISelector<T>) selector;

@@ -6,6 +6,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import solonarv.mods.thegreatweb.common.TheGreatWeb;
 import solonarv.mods.thegreatweb.common.locator.BlockLocator;
 
 import javax.annotation.Nonnull;
@@ -18,7 +19,7 @@ public class ModBlocks {
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
-        System.out.println("Registering blocks!");
+        TheGreatWeb.logger.info("Registering blocks!");
         event.getRegistry().registerAll(locatorWorkbench);
     }
 

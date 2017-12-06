@@ -14,6 +14,7 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import solonarv.mods.thegreatweb.common.TheGreatWeb;
 import solonarv.mods.thegreatweb.common.item.base.IModularLocatorItem;
 import solonarv.mods.thegreatweb.common.item.base.ItemMod;
 import solonarv.mods.thegreatweb.common.locator.BlockLocator;
@@ -58,10 +59,10 @@ public class ItemBlockLocator extends ItemMod implements IModularLocatorItem {
 
             Vec3d position = playerIn.getPositionVector();
 
-            System.out.println("Locator: " + loc);
-            System.out.println("Filters: " + filters);
-            System.out.println("Selector: " + selector);
-            System.out.println("Consumer: " + consumer);
+            TheGreatWeb.logger.info("Locator: " + loc);
+            TheGreatWeb.logger.info("Filters: " + filters);
+            TheGreatWeb.logger.info("Selector: " + selector);
+            TheGreatWeb.logger.info("Consumer: " + consumer);
 
             List<BlockResult> results = loc.findResults(worldIn, position, playerIn, filters);
             results = selector.select(worldIn, position, playerIn, results);

@@ -73,7 +73,6 @@ public class Filters {
 
     @Nullable
     private static IFactoryNBT<IFilter<ILocatorResult>> getFilterFactoryByID(ResourceLocation filterID) {
-        System.out.println("Retrieving filter with ID " + filterID);
         return filters.get(filterID);
     }
 

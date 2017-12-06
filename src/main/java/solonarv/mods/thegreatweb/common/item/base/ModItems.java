@@ -6,6 +6,7 @@ import net.minecraft.item.ItemBlock;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import solonarv.mods.thegreatweb.common.TheGreatWeb;
 import solonarv.mods.thegreatweb.common.block.ModBlocks;
 import solonarv.mods.thegreatweb.common.core.TheGreatWebCreativeTab;
 import solonarv.mods.thegreatweb.common.item.ItemBlockLocator;
@@ -17,7 +18,7 @@ public class ModItems {
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event){
-        System.out.println("Registering items!");
+        TheGreatWeb.logger.info("Registering items!");
         event.getRegistry().registerAll(blockLocator);
         for (Block blk : ModBlocks.allBlocks) {
             event.getRegistry().register(new ItemBlock(blk).setRegistryName(blk.getRegistryName()).setCreativeTab(TheGreatWebCreativeTab.instance));
