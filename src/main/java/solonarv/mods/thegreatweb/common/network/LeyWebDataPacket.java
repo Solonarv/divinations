@@ -7,8 +7,9 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import solonarv.mods.thegreatweb.common.leyweb.LeyLine;
 import solonarv.mods.thegreatweb.common.leyweb.LeyNode;
 import solonarv.mods.thegreatweb.common.leyweb.LeyNodeGroup;
-import solonarv.mods.thegreatweb.common.leyweb.LeyWeb;
+import solonarv.mods.thegreatweb.common.leyweb.LeyWebServer;
 
+import java.util.Collection;
 import java.util.Set;
 
 public class LeyWebDataPacket extends RequestLeyWebDataPacket {
@@ -55,7 +56,7 @@ public class LeyWebDataPacket extends RequestLeyWebDataPacket {
         }
     }
 
-    public LeyWebDataPacket setFromData(LeyWeb web, int groupX, int groupZ) {
+    public LeyWebDataPacket setFromData(LeyWebServer web, int groupX, int groupZ) {
         LeyNodeGroup group = web.getOrGenerateNodeGroup(groupX, groupZ, true);
         nodes = new LeyNode[group.size() + 4];
 
@@ -68,7 +69,7 @@ public class LeyWebDataPacket extends RequestLeyWebDataPacket {
             nodes[i++] = web.getNode(id);
         }
 
-        Set<LeyLine> leyLines = web.getEdgesTouchingGroup(group);
+        Collection<LeyLine> leyLines = web.leyLinesTouchingGroup(group);
         edges = new LeyLine[leyLines.size()];
         int j = 0;
         for (LeyLine leyline : leyLines) {

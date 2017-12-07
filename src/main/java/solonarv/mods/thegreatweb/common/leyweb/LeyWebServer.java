@@ -1,11 +1,6 @@
 package solonarv.mods.thegreatweb.common.leyweb;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.graph.ElementOrder;
 import com.google.common.graph.EndpointPair;
-import com.google.common.graph.MutableValueGraph;
-import com.google.common.graph.ValueGraphBuilder;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagIntArray;
@@ -24,8 +19,9 @@ import solonarv.mods.thegreatweb.common.util.MathUtil;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class LeyWeb extends WorldSavedData {
+public class LeyWebServer extends WorldSavedData implements ILeyWeb {
 
     public static final IntRange LEYLINE_POWER_RANGE = new IntRange(2000, 10000);
 
@@ -36,30 +32,26 @@ public class LeyWeb extends WorldSavedData {
 
     private static final String DATA_NAME = Misc.MOD_ID + "_LeyWebData";
 
-    private MutableValueGraph<Integer, LeyLine> web;
-
-    private BiMap<Integer, LeyNode> nodes;
+    private Map<Integer, LeyNode> nodes;
+    private Map<Integer, Collection<Integer>> adjacencyMap;
 
     private Map<Pair<Integer, Integer>, LeyNodeGroup> nodeGroups;
     private int nextNodeID;
+    private Map<Pair<Integer, Integer>, LeyLine> leylines;
 
-    public LeyWeb() {
+    public LeyWebServer() {
         super(DATA_NAME);
-        nodes = HashBiMap.create(64);
-        web = ValueGraphBuilder
-                .directed()
-                .allowsSelfLoops(false)
-                .expectedNodeCount(64)
-                .nodeOrder(ElementOrder.insertion())
-                .build();
-        nodeGroups = new HashMap<>(32 / 3);
+        nodes = new HashMap<>(128);
+        adjacencyMap = new HashMap<>(128);
+        leylines = new HashMap<>(64);
+        nodeGroups = new HashMap<>(32);
     }
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         int version = nbt.getInteger("version");
         if (version != VERSION)
-            throw new UnsupportedOperationException(String.format("Error while deserializing LeyWeb data: unknown version %d", version));
+            throw new UnsupportedOperationException(String.format("Error while deserializing LeyWebServer data: unknown version %d", version));
         int numNodes = nbt.getInteger("nodeCount");
         nextNodeID = nbt.getInteger("nextNodeID");
 
@@ -70,14 +62,13 @@ public class LeyWeb extends WorldSavedData {
             LeyNode node = new LeyNode(data[0], data[2], nodeID);
 
             nodes.put(nodeID, node);
-            web.addNode(nodeID);
             getNodeGroupForBlockCoords(node.getX(), node.getZ()).add(nodeID);
         }
 
         NBTTagList nbtEdges = nbt.getTagList("edges", Constants.NBT.TAG_INT_ARRAY);
         for (NBTBase tag : nbtEdges) {
             int[] data = ((NBTTagIntArray) tag).getIntArray();
-            web.putEdgeValue(data[0], data[1], new LeyLine(data[0], data[1], data[2]));
+            _newLeyLine(data[0], data[1], data[2]);
         }
 
     }
@@ -99,9 +90,8 @@ public class LeyWeb extends WorldSavedData {
         compound.setTag("nodes", nbtNodes);
 
         NBTTagList nbtEdges = new NBTTagList();
-        for (EndpointPair<Integer> edge : web.edges()) {
-            LeyLine connection = web.edgeValue(edge.source(), edge.target());
-            int[] data = new int[]{edge.source(), edge.target(), connection.getFlowAmount()};
+        for (LeyLine leyLine : leylines.values()) {
+            int[] data = new int[]{leyLine.getSource(), leyLine.getTarget(), leyLine.getFlowAmount()};
             nbtEdges.appendTag(new NBTTagIntArray(data));
         }
         compound.setTag("edges", nbtEdges);
@@ -111,17 +101,17 @@ public class LeyWeb extends WorldSavedData {
         return compound;
     }
 
-    public static LeyWeb get() {
+    public static LeyWebServer get() {
         return get(DimensionManager.getWorld(0));
     }
 
-    public static LeyWeb get(World world) {
+    public static LeyWebServer get(World world) {
         MapStorage storage = Objects.requireNonNull(world.getMapStorage());
 
-        LeyWeb instance = (LeyWeb) storage.getOrLoadData(LeyWeb.class, DATA_NAME);
+        LeyWebServer instance = (LeyWebServer) storage.getOrLoadData(LeyWebServer.class, DATA_NAME);
 
         if (instance == null) {
-            instance = new LeyWeb();
+            instance = new LeyWebServer();
             storage.setData(DATA_NAME, instance);
         }
 
@@ -138,7 +128,6 @@ public class LeyWeb extends WorldSavedData {
 
         getNodeGroupForBlockCoords(x, z).add(id);
         nodes.put(id, node);
-        web.addNode(id);
 
         markDirty();
         return node;
@@ -157,27 +146,37 @@ public class LeyWeb extends WorldSavedData {
         return nodeGroups.get(groupCoords);
     }
 
-    private void newRandomLeyLine(int sourceNode, int targetNode) {
+    private void newRandomLeyLine(LeyNode sourceNode, LeyNode targetNode) {
         // If the edge already exists, don't do anything
-        if (web.adjacentNodes(sourceNode).contains(targetNode))
+        if (areNodesConnected(sourceNode, targetNode))
             return;
-        LeyNode u = getNode(sourceNode);
-        LeyNode v = getNode(targetNode);
-        if (u == null || v == null)
-            throw new IllegalStateException("Attempted to add a ley line from a node that doesn't exist!");
-        long seed = DimensionManager.getWorld(0).getSeed() ^ (173 * ((long)u.hashCode() << 32 + (long) v.hashCode()));
+        long seed = DimensionManager.getWorld(0).getSeed() ^ (173 * ((long)sourceNode.hashCode() + (long) targetNode.hashCode()));
         Random rand = new Random(seed);
         newLeyLine(sourceNode, targetNode, LEYLINE_POWER_RANGE.random(rand), rand.nextBoolean());
     }
 
-    public void newLeyLine(int sourceNode, int targetNode, int flowAmount, boolean reverse) {
+    public void newLeyLine(LeyNode sourceNode, LeyNode targetNode, int flowAmount, boolean reverse) {
         newLeyLine( reverse ? targetNode : sourceNode, reverse ? sourceNode : targetNode, flowAmount);
     }
 
-    private void newLeyLine(int sourceNode, int targetNode, int flowAmount) {
-        web.putEdgeValue(sourceNode, targetNode, new LeyLine(sourceNode, targetNode, flowAmount));
-        TheGreatWeb.logger.debug(String.format("Created ley line from %d to %d with strength %d", sourceNode, targetNode, flowAmount));
+    private void newLeyLine(LeyNode sourceNode, LeyNode targetNode, int flowAmount) {
+        _newLeyLine(sourceNode.id, targetNode.id, flowAmount);
+        TheGreatWeb.logger.debug(String.format("Created ley line from %s to %s with strength %d", sourceNode, targetNode, flowAmount));
         markDirty();
+    }
+
+    /**
+     * Create a new leyline, but doesn't mark the ley web for saving. Used internally when deserializing the web from NBT.
+     * @param sourceNode the node ID that the ley line starts at
+     * @param targetNode the node ID that the ley line points towards
+     * @param flowAmount the ley line's flow strength
+     */
+    private void _newLeyLine(int sourceNode, int targetNode, int flowAmount) {
+        leylines.put(Pair.of(sourceNode, targetNode), new LeyLine(sourceNode, targetNode, flowAmount));
+        adjacencyMap.putIfAbsent(sourceNode, new HashSet<>(3));
+        adjacencyMap.get(sourceNode).add(targetNode);
+        adjacencyMap.putIfAbsent(targetNode, new HashSet<>(3));
+        adjacencyMap.get(targetNode).add(sourceNode);
     }
 
     public LeyNodeGroup getOrGenerateNodeGroup(int groupX, int groupZ, boolean connectToNeighbors) {
@@ -231,10 +230,10 @@ public class LeyWeb extends WorldSavedData {
             switch (LeyNodeGroup.ConnectionStyle.randomStyle(rand)) {
 
                 case SIMPLE:
-                    newRandomLeyLine(nodeNorth.id, nodeEast.id);
-                    newRandomLeyLine(nodeNorth.id, nodeWest.id);
-                    newRandomLeyLine(nodeSouth.id, nodeEast.id);
-                    newRandomLeyLine(nodeSouth.id, nodeWest.id);
+                    newRandomLeyLine(nodeNorth, nodeEast);
+                    newRandomLeyLine(nodeNorth, nodeWest);
+                    newRandomLeyLine(nodeSouth, nodeEast);
+                    newRandomLeyLine(nodeSouth, nodeWest);
                     break;
                 case DIAGONAL:
                     // randomly pick NE-SW or NW-SE diagonal
@@ -253,46 +252,46 @@ public class LeyWeb extends WorldSavedData {
                     // randomly pick one of the four edges to leave as normal
                     switch (rand.nextInt(4)){
                         case 0: // NE edge is normal
-                            newRandomLeyLine(nodeNorth.id, nodeEast.id);
+                            newRandomLeyLine(nodeNorth, nodeEast);
                             nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
                             nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
                             nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
                             centerPos = MathUtil.geometricCenter(nodeSE, nodeSW, nodeNW);
                             nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeSE.id, nodeCenter.id);
-                            newRandomLeyLine(nodeSW.id, nodeCenter.id);
-                            newRandomLeyLine(nodeNW.id, nodeCenter.id);
+                            newRandomLeyLine(nodeSE, nodeCenter);
+                            newRandomLeyLine(nodeSW, nodeCenter);
+                            newRandomLeyLine(nodeNW, nodeCenter);
                             break;
                         case 1: // SE edge is normal
-                            newRandomLeyLine(nodeSouth.id, nodeEast.id);
+                            newRandomLeyLine(nodeSouth, nodeEast);
                             nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
                             nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
                             nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
                             centerPos = MathUtil.geometricCenter(nodeNE, nodeSW, nodeNW);
                             nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeNE.id, nodeCenter.id);
-                            newRandomLeyLine(nodeSW.id, nodeCenter.id);
-                            newRandomLeyLine(nodeNW.id, nodeCenter.id);
+                            newRandomLeyLine(nodeNE, nodeCenter);
+                            newRandomLeyLine(nodeSW, nodeCenter);
+                            newRandomLeyLine(nodeNW, nodeCenter);
                         case 2: // SW edge is normal
-                            newRandomLeyLine(nodeSouth.id, nodeWest.id);
+                            newRandomLeyLine(nodeSouth, nodeWest);
                             nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
                             nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
                             nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
                             centerPos = MathUtil.geometricCenter(nodeNE, nodeSE, nodeNW);
                             nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeNE.id, nodeCenter.id);
-                            newRandomLeyLine(nodeSE.id, nodeCenter.id);
-                            newRandomLeyLine(nodeNW.id, nodeCenter.id);
+                            newRandomLeyLine(nodeNE, nodeCenter);
+                            newRandomLeyLine(nodeSE, nodeCenter);
+                            newRandomLeyLine(nodeNW, nodeCenter);
                         case 3: // NW edge is normal
-                            newRandomLeyLine(nodeNorth.id, nodeWest.id);
+                            newRandomLeyLine(nodeNorth, nodeWest);
                             nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
                             nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
                             nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
                             centerPos = MathUtil.geometricCenter(nodeNE, nodeSE, nodeSW);
                             nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeNE.id, nodeCenter.id);
-                            newRandomLeyLine(nodeSE.id, nodeCenter.id);
-                            newRandomLeyLine(nodeSW.id, nodeCenter.id);
+                            newRandomLeyLine(nodeNE, nodeCenter);
+                            newRandomLeyLine(nodeSE, nodeCenter);
+                            newRandomLeyLine(nodeSW, nodeCenter);
                     }
                     break;
             }
@@ -305,16 +304,16 @@ public class LeyWeb extends WorldSavedData {
             if (connectToNeighbors) {
 
                 LeyNodeGroup groupNorth = getOrGenerateNodeGroup(groupX, groupZ - 1, false);
-                newRandomLeyLine(nodeNorth.id, groupNorth.getSouthNode());
+                newRandomLeyLine(nodeNorth, getNode(groupNorth.getSouthNode()));
 
                 LeyNodeGroup groupEast = getOrGenerateNodeGroup(groupX + 1, groupZ, false);
-                newRandomLeyLine(nodeEast.id, groupEast.getWestNode());
+                newRandomLeyLine(nodeEast, getNode(groupEast.getWestNode()));
 
                 LeyNodeGroup groupSouth = getOrGenerateNodeGroup(groupX, groupZ + 1, false);
-                newRandomLeyLine(nodeSouth.id, groupSouth.getNorthNode());
+                newRandomLeyLine(nodeSouth, getNode(groupSouth.getNorthNode()));
 
                 LeyNodeGroup groupWest = getOrGenerateNodeGroup(groupX - 1, groupZ, false);
-                newRandomLeyLine(nodeWest.id, groupWest.getEastNode());
+                newRandomLeyLine(nodeWest, getNode(groupWest.getEastNode()));
 
             }
         }
@@ -326,8 +325,8 @@ public class LeyWeb extends WorldSavedData {
         int x, y, z;
 
         // first, generate the normal edges
-        newRandomLeyLine(nodeNorth.id, nodeSouthComplex.id);
-        newRandomLeyLine(nodeSouth.id, nodeNorthComplex.id);
+        newRandomLeyLine(nodeNorth, nodeSouthComplex);
+        newRandomLeyLine(nodeSouth, nodeNorthComplex);
 
         // generate the north-adjacent node
         LeyNode nodeNorthInner = generateNodeOnEdge(overworld, rand, nodeNorth, nodeNorthComplex, true, false);
@@ -335,7 +334,7 @@ public class LeyWeb extends WorldSavedData {
         LeyNode nodeSouthInner = generateNodeOnEdge(overworld, rand, nodeSouth, nodeSouthComplex, false, true);
 
         // generate edges
-        newRandomLeyLine(nodeNorthInner.id, nodeSouthInner.id);
+        newRandomLeyLine(nodeNorthInner, nodeSouthInner);
 
     }
 
@@ -362,8 +361,8 @@ public class LeyWeb extends WorldSavedData {
         z = new IntRange(nodeU.getZ(), nodeV.getZ()).weightedAverage(v);
         y = overworld.getHeight(x, z);
         LeyNode nodeNorthInner = newLeyNode(x, y, z);
-        newRandomLeyLine(nodeU.id, nodeNorthInner.id);
-        newRandomLeyLine(nodeNorthInner.id, nodeV.id);
+        newRandomLeyLine(nodeU, nodeNorthInner);
+        newRandomLeyLine(nodeNorthInner, nodeV);
         return nodeNorthInner;
     }
 
@@ -371,26 +370,64 @@ public class LeyWeb extends WorldSavedData {
         return nodes.get(nodeID);
     }
 
-    public Set<LeyLine> getEdgesAroundNode(int nodeID) {
-        // Why the FUCK does guava not have a method for this
-        return web
-                .edges()
+    public Collection<LeyLine> leyLinesTouchingGroup(LeyNodeGroup group) {
+        return group
                 .stream()
-                .filter((pair -> pair.target() == nodeID || pair.source() == nodeID))
-                .map(pair -> getLeyLine(pair.source(), pair.target()))
-                .collect(Collectors.toSet());
+                .flatMap(this::_leyLinesAround)
+                .collect(Collectors.toList());
     }
 
-    public Set<LeyLine> getEdgesTouchingGroup(LeyNodeGroup group) {
-        return web
-                .edges()
-                .stream()
-                .filter(pair -> group.contains(pair.target()) || group.contains(pair.source()))
-                .map(pair -> getLeyLine(pair.source(), pair.target()))
-                .collect(Collectors.toSet());
+    @Override
+    public Collection<LeyNode> nodes() {
+        return nodes.values();
     }
 
-    public LeyLine getLeyLine(int sourceID, int targetID) {
-        return web.edgeValue(sourceID, targetID);
+    @Override
+    public Collection<LeyLine> allLeylines() {
+        return leylines.values();
+    }
+
+    @Override
+    public Collection<LeyLine> leyLinesAround(LeyNode node) {
+        return _leyLinesAround(node.id).collect(Collectors.toList());
+    }
+
+    private Stream<LeyLine> _leyLinesAround(int nodeID) {
+        return adjacencyMap
+                .get(nodeID)
+                .stream()
+                .flatMap(otherID -> Stream.of(leylines.get(Pair.of(nodeID, otherID)), leylines.get(Pair.of(otherID,  nodeID))));
+    }
+
+    @Override
+    public Collection<LeyLine> leyLinesFrom(LeyNode node) {
+        return adjacencyMap
+                .get(node.id)
+                .stream()
+                .map(otherID -> leylines.get(Pair.of(node.id, otherID)))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<LeyLine> leyLinesTo(LeyNode node) {
+        return adjacencyMap
+                .get(node.id)
+                .stream()
+                .map(otherID -> leylines.get(Pair.of(otherID, node.id)))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Pair<LeyNode, LeyNode> leylineEndpoints(LeyLine leyLine) {
+        return Pair.of(nodes.get(leyLine.getSource()), nodes.get(leyLine.getTarget()));
+    }
+
+    @Override
+    public boolean areNodesConnected(LeyNode source, LeyNode target) {
+        Collection<Integer> forward = adjacencyMap.get(source.id);
+        Collection<Integer> backward = adjacencyMap.get(target.id);
+        return (forward != null && forward.contains(target.id))
+                || (backward != null && backward.contains(source.id));
+
     }
 }

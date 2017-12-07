@@ -25,7 +25,7 @@ public class LeyNodeGroup extends HashSet<Integer> {
         return z;
     }
 
-    public Set<LeyNode> getNodes(LeyWeb web) {
+    public Set<LeyNode> getNodes(LeyWebServer web) {
         Set<LeyNode> result = new HashSet<>(size());
         for (int nodeID : this) {
             LeyNode node = web.getNode(nodeID);
