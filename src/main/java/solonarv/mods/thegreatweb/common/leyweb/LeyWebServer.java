@@ -1,6 +1,5 @@
 package solonarv.mods.thegreatweb.common.leyweb;
 
-import com.google.common.graph.EndpointPair;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagIntArray;
@@ -8,49 +7,22 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapStorage;
-import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.Constants;
-import org.apache.commons.lang3.tuple.Pair;
 import solonarv.mods.thegreatweb.common.TheGreatWeb;
-import solonarv.mods.thegreatweb.common.constants.Misc;
 import solonarv.mods.thegreatweb.common.lib.IntRange;
-import solonarv.mods.thegreatweb.common.util.MathUtil;
+import solonarv.mods.thegreatweb.common.lib.util.MathUtil;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class LeyWebServer extends WorldSavedData implements ILeyWeb {
+public class LeyWebServer extends AbstractLeyWeb {
 
-    public static final IntRange LEYLINE_POWER_RANGE = new IntRange(2000, 10000);
-
-    public static final int GROUP_SIZE_CHUNKS = 3;
-    public static final int GROUP_SIZE_BLOCKS = GROUP_SIZE_CHUNKS * 16;
-
-    private static int VERSION = 1;
-
-    private static final String DATA_NAME = Misc.MOD_ID + "_LeyWebData";
-
-    private Map<Integer, LeyNode> nodes;
-    private Map<Integer, Collection<Integer>> adjacencyMap;
-
-    private Map<Pair<Integer, Integer>, LeyNodeGroup> nodeGroups;
     private int nextNodeID;
-    private Map<Pair<Integer, Integer>, LeyLine> leylines;
-
-    public LeyWebServer() {
-        super(DATA_NAME);
-        nodes = new HashMap<>(128);
-        adjacencyMap = new HashMap<>(128);
-        leylines = new HashMap<>(64);
-        nodeGroups = new HashMap<>(32);
-    }
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         int version = nbt.getInteger("version");
-        if (version != VERSION)
+        if (version != DATA_VERSION)
             throw new UnsupportedOperationException(String.format("Error while deserializing LeyWebServer data: unknown version %d", version));
         int numNodes = nbt.getInteger("nodeCount");
         nextNodeID = nbt.getInteger("nextNodeID");
@@ -90,13 +62,13 @@ public class LeyWebServer extends WorldSavedData implements ILeyWeb {
         compound.setTag("nodes", nbtNodes);
 
         NBTTagList nbtEdges = new NBTTagList();
-        for (LeyLine leyLine : leylines.values()) {
+        for (LeyLine leyLine : leyLines.values()) {
             int[] data = new int[]{leyLine.getSource(), leyLine.getTarget(), leyLine.getFlowAmount()};
             nbtEdges.appendTag(new NBTTagIntArray(data));
         }
         compound.setTag("edges", nbtEdges);
 
-        compound.setInteger("version", VERSION);
+        compound.setInteger("version", DATA_VERSION);
 
         return compound;
     }
@@ -133,50 +105,17 @@ public class LeyWebServer extends WorldSavedData implements ILeyWeb {
         return node;
     }
 
-    private Set<Integer> getNodeGroupForBlockCoords(int x, int z) {
-        int groupX = Math.floorDiv(x, GROUP_SIZE_BLOCKS);
-        int groupZ = Math.floorDiv(z, GROUP_SIZE_BLOCKS);
-        return getNodeGroup(groupX, groupZ);
-    }
-
-    public LeyNodeGroup getNodeGroup(int groupX, int groupZ) {
-        Pair<Integer, Integer> groupCoords = Pair.of(groupX, groupZ);
-        nodeGroups.putIfAbsent(groupCoords, new LeyNodeGroup(groupX, groupZ));
-        TheGreatWeb.logger.debug(String.format("Fetched node group <%d, %d>", groupX, groupZ));
-        return nodeGroups.get(groupCoords);
-    }
-
     private void newRandomLeyLine(LeyNode sourceNode, LeyNode targetNode) {
         // If the edge already exists, don't do anything
-        if (areNodesConnected(sourceNode, targetNode))
+        if (areNodesConnected(sourceNode, targetNode).areConnected())
             return;
         long seed = DimensionManager.getWorld(0).getSeed() ^ (173 * ((long)sourceNode.hashCode() + (long) targetNode.hashCode()));
         Random rand = new Random(seed);
         newLeyLine(sourceNode, targetNode, LEYLINE_POWER_RANGE.random(rand), rand.nextBoolean());
     }
 
-    public void newLeyLine(LeyNode sourceNode, LeyNode targetNode, int flowAmount, boolean reverse) {
+    private void newLeyLine(LeyNode sourceNode, LeyNode targetNode, int flowAmount, boolean reverse) {
         newLeyLine( reverse ? targetNode : sourceNode, reverse ? sourceNode : targetNode, flowAmount);
-    }
-
-    private void newLeyLine(LeyNode sourceNode, LeyNode targetNode, int flowAmount) {
-        _newLeyLine(sourceNode.id, targetNode.id, flowAmount);
-        TheGreatWeb.logger.debug(String.format("Created ley line from %s to %s with strength %d", sourceNode, targetNode, flowAmount));
-        markDirty();
-    }
-
-    /**
-     * Create a new leyline, but doesn't mark the ley web for saving. Used internally when deserializing the web from NBT.
-     * @param sourceNode the node ID that the ley line starts at
-     * @param targetNode the node ID that the ley line points towards
-     * @param flowAmount the ley line's flow strength
-     */
-    private void _newLeyLine(int sourceNode, int targetNode, int flowAmount) {
-        leylines.put(Pair.of(sourceNode, targetNode), new LeyLine(sourceNode, targetNode, flowAmount));
-        adjacencyMap.putIfAbsent(sourceNode, new HashSet<>(3));
-        adjacencyMap.get(sourceNode).add(targetNode);
-        adjacencyMap.putIfAbsent(targetNode, new HashSet<>(3));
-        adjacencyMap.get(targetNode).add(sourceNode);
     }
 
     public LeyNodeGroup getOrGenerateNodeGroup(int groupX, int groupZ, boolean connectToNeighbors) {
@@ -366,68 +305,4 @@ public class LeyWebServer extends WorldSavedData implements ILeyWeb {
         return nodeNorthInner;
     }
 
-    public LeyNode getNode(int nodeID) {
-        return nodes.get(nodeID);
-    }
-
-    public Collection<LeyLine> leyLinesTouchingGroup(LeyNodeGroup group) {
-        return group
-                .stream()
-                .flatMap(this::_leyLinesAround)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Collection<LeyNode> nodes() {
-        return nodes.values();
-    }
-
-    @Override
-    public Collection<LeyLine> allLeylines() {
-        return leylines.values();
-    }
-
-    @Override
-    public Collection<LeyLine> leyLinesAround(LeyNode node) {
-        return _leyLinesAround(node.id).collect(Collectors.toList());
-    }
-
-    private Stream<LeyLine> _leyLinesAround(int nodeID) {
-        return adjacencyMap
-                .get(nodeID)
-                .stream()
-                .flatMap(otherID -> Stream.of(leylines.get(Pair.of(nodeID, otherID)), leylines.get(Pair.of(otherID,  nodeID))));
-    }
-
-    @Override
-    public Collection<LeyLine> leyLinesFrom(LeyNode node) {
-        return adjacencyMap
-                .get(node.id)
-                .stream()
-                .map(otherID -> leylines.get(Pair.of(node.id, otherID)))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Collection<LeyLine> leyLinesTo(LeyNode node) {
-        return adjacencyMap
-                .get(node.id)
-                .stream()
-                .map(otherID -> leylines.get(Pair.of(otherID, node.id)))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Pair<LeyNode, LeyNode> leylineEndpoints(LeyLine leyLine) {
-        return Pair.of(nodes.get(leyLine.getSource()), nodes.get(leyLine.getTarget()));
-    }
-
-    @Override
-    public boolean areNodesConnected(LeyNode source, LeyNode target) {
-        Collection<Integer> forward = adjacencyMap.get(source.id);
-        Collection<Integer> backward = adjacencyMap.get(target.id);
-        return (forward != null && forward.contains(target.id))
-                || (backward != null && backward.contains(source.id));
-
-    }
 }

@@ -2,15 +2,14 @@ package solonarv.mods.thegreatweb.client.gui;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.util.ResourceLocation;
-import solonarv.mods.thegreatweb.common.constants.Misc;
 import solonarv.mods.thegreatweb.common.gui.ContainerLocatorWorkbench;
-import solonarv.mods.thegreatweb.common.lib.Util;
+import solonarv.mods.thegreatweb.common.lib.util.ResourceLocationUtils;
 
 public class LocatorWorkbenchGui extends GuiContainer {
     public static final int WIDTH = 256;
     public static final int HEIGHT = 256;
 
-    private static final ResourceLocation background = Util.withModID("textures/gui/locator_workbench.png");
+    private static final ResourceLocation background = ResourceLocationUtils.withModID("textures/gui/locator_workbench.png");
 
     public LocatorWorkbenchGui(ContainerLocatorWorkbench container) {
         super(container);

@@ -1,7 +1,7 @@
 package solonarv.mods.thegreatweb.common.locator.consumer;
 
 import net.minecraft.util.ResourceLocation;
-import solonarv.mods.thegreatweb.common.lib.Util;
+import solonarv.mods.thegreatweb.common.lib.util.ResourceLocationUtils;
 import solonarv.mods.thegreatweb.common.locator.result.ILocatorResult;
 
 import java.util.HashMap;
@@ -29,7 +29,7 @@ public class Consumers {
     }
 
     public static void registerConsumer(String id, IConsumer<? extends ILocatorResult> consumer) {
-        registerConsumer(Util.resourceLocationWithDefaultDomain(id), consumer);
+        registerConsumer(ResourceLocationUtils.resourceLocationWithDefaultDomain(id), consumer);
     }
 
     @SuppressWarnings("unchecked")
@@ -41,6 +41,6 @@ public class Consumers {
     }
 
     public static <T extends ILocatorResult> IConsumer<T> fromString(String id, Class<T> cls) {
-        return getConsumerByID(Util.resourceLocationWithDefaultDomain(id), cls);
+        return getConsumerByID(ResourceLocationUtils.resourceLocationWithDefaultDomain(id), cls);
     }
 }

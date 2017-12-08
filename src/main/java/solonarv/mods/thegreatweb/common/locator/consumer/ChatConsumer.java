@@ -5,7 +5,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import solonarv.mods.thegreatweb.common.locator.result.ILocatorResult;
-import solonarv.mods.thegreatweb.common.util.ChatUtil;
+import solonarv.mods.thegreatweb.common.lib.util.ChatUtil;
 
 import java.util.List;
 

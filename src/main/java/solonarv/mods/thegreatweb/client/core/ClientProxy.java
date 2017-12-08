@@ -6,10 +6,11 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import solonarv.mods.thegreatweb.common.block.ModBlocks;
+import solonarv.mods.thegreatweb.common.constants.Misc;
 import solonarv.mods.thegreatweb.common.core.CommonProxy;
 import solonarv.mods.thegreatweb.common.item.base.ModItems;
 
-@Mod.EventBusSubscriber(Side.CLIENT)
+@Mod.EventBusSubscriber(value = Side.CLIENT, modid = Misc.MOD_ID)
 public class ClientProxy extends CommonProxy {
 
     @SubscribeEvent

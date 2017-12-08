@@ -1,11 +1,15 @@
 package solonarv.mods.thegreatweb.common.lib;
 
+import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 /**
  *
  */
-public class IntRange {
+public class IntRange extends AbstractCollection<Integer> {
     public final int min, max;
 
     public IntRange(int min, int max) {
@@ -16,6 +20,19 @@ public class IntRange {
 
     public int size() {
         return max - min;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        if (! (o instanceof Integer))
+            return false;
+        int i = (Integer) o;
+        return i >= min && i <= max;
     }
 
     public int random(Random rng) {
@@ -60,5 +77,74 @@ public class IntRange {
     @Override
     public int hashCode() {
         return min ^ max;
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+        return new IntIterator(min, max);
+    }
+
+    @Override
+    public boolean add(Integer integer) {
+        throw new UnsupportedOperationException("IntRange is an immutable collection");
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException("IntRange is an immutable collection");
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        for (Object o : c)
+            if (!contains(o))
+                return false;
+        return true;
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends Integer> c) {
+        throw new UnsupportedOperationException("IntRange is an immutable collection");
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException("IntRange is an immutable collection");
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException("IntRange is an immutable collection");
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException("IntRange is an immutable collection");
+    }
+
+    public static IntRange around(int centerChunkX, int radius) {
+        return new IntRange(centerChunkX - radius, centerChunkX + radius);
+    }
+
+    private class IntIterator implements Iterator<Integer> {
+        private final int min;
+        private final int max;
+        private int current;
+
+        public IntIterator(int min, int max) {
+            this.min = min;
+            this.max = max;
+            this.current = min;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return current <= max;
+        }
+
+        @Override
+        public Integer next() {
+            return current++;
+        }
     }
 }

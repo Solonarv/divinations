@@ -7,10 +7,9 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import solonarv.mods.thegreatweb.common.lib.ConstantFactory;
 import solonarv.mods.thegreatweb.common.lib.IFactoryNBT;
-import solonarv.mods.thegreatweb.common.lib.Util;
+import solonarv.mods.thegreatweb.common.lib.util.ResourceLocationUtils;
 import solonarv.mods.thegreatweb.common.locator.filter.block.LightLevelFilter;
 import solonarv.mods.thegreatweb.common.locator.filter.block.TileEntityFilter;
-import solonarv.mods.thegreatweb.common.locator.result.BlockResult;
 import solonarv.mods.thegreatweb.common.locator.result.ILocatorResult;
 
 import javax.annotation.Nullable;
@@ -29,7 +28,7 @@ public class Filters {
     public static void init(){
         if (initDone)
             return;
-        registerFilter(new ConstantFactory<>(Util.withModID("all"), ALL));
+        registerFilter(new ConstantFactory<>(ResourceLocationUtils.withModID("all"), ALL));
         registerFilter(LightLevelFilter.factory);
         registerFilter(TileEntityFilter.factory);
         initDone = true;
@@ -56,7 +55,7 @@ public class Filters {
             if (!(filterTag instanceof NBTTagCompound))
                 continue;
             NBTTagCompound compound = (NBTTagCompound) filterTag;
-            ResourceLocation filterID = Util.resourceLocationWithDefaultDomain(compound.getString("filterType"));
+            ResourceLocation filterID = ResourceLocationUtils.resourceLocationWithDefaultDomain(compound.getString("filterType"));
 
             IFactoryNBT<IFilter<ILocatorResult>> factory = getFilterFactoryByID(filterID);
 

@@ -4,8 +4,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import solonarv.mods.thegreatweb.common.lib.Util;
-import solonarv.mods.thegreatweb.common.locator.result.BlockResult;
+import solonarv.mods.thegreatweb.common.lib.util.ResourceLocationUtils;
 import solonarv.mods.thegreatweb.common.locator.result.ILocatorResult;
 
 import java.util.Collections;
@@ -61,11 +60,11 @@ public class Selectors {
     public static void init() {
         if (initDone)
             return;
-        registerSelector(Util.withModID("none"), NONE);
-        registerSelector(Util.withModID("all"), ALL);
-        registerSelector(Util.withModID("random"), RANDOM);
-        registerSelector(Util.withModID("nearest"), NEAREST);
-        registerSelector(Util.withModID("furthest"), FURTHEST);
+        registerSelector(ResourceLocationUtils.withModID("none"), NONE);
+        registerSelector(ResourceLocationUtils.withModID("all"), ALL);
+        registerSelector(ResourceLocationUtils.withModID("random"), RANDOM);
+        registerSelector(ResourceLocationUtils.withModID("nearest"), NEAREST);
+        registerSelector(ResourceLocationUtils.withModID("furthest"), FURTHEST);
         initDone = true;
     }
 
@@ -82,7 +81,7 @@ public class Selectors {
     }
 
     public static <T extends ILocatorResult> ISelector<T> fromString(String str, Class<T> cls) {
-        return getSelectorFromID(Util.resourceLocationWithDefaultDomain(str), cls);
+        return getSelectorFromID(ResourceLocationUtils.resourceLocationWithDefaultDomain(str), cls);
     }
 
     // See comments on Filters::fromNBT

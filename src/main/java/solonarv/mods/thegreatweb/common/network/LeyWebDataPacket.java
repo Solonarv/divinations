@@ -1,9 +1,13 @@
 package solonarv.mods.thegreatweb.common.network;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import solonarv.mods.thegreatweb.client.leyweb.LeyWebClient;
 import solonarv.mods.thegreatweb.common.leyweb.LeyLine;
 import solonarv.mods.thegreatweb.common.leyweb.LeyNode;
 import solonarv.mods.thegreatweb.common.leyweb.LeyNodeGroup;
@@ -12,7 +16,7 @@ import solonarv.mods.thegreatweb.common.leyweb.LeyWebServer;
 import java.util.Collection;
 import java.util.Set;
 
-public class LeyWebDataPacket extends RequestLeyWebDataPacket {
+public class LeyWebDataPacket extends LeyWebPacketBase {
     private LeyNode[] nodes;
     private LeyLine[] edges;
 
@@ -79,11 +83,20 @@ public class LeyWebDataPacket extends RequestLeyWebDataPacket {
         return this;
     }
 
+    public LeyNode[] getNodes() {
+        return nodes;
+    }
+
+    public LeyLine[] getEdges() {
+        return edges;
+    }
+
     public static class Handler implements IMessageHandler<LeyWebDataPacket, IMessage> {
 
         @Override
         public IMessage onMessage(LeyWebDataPacket message, MessageContext ctx) {
-            // TODO write packet data to client-side web
+            FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() ->
+                    LeyWebClient.getInstanceFor(Minecraft.getMinecraft().world).processDataPacket(message));
             return null;
         }
     }

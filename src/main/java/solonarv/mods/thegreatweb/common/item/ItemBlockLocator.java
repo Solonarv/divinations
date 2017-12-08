@@ -25,7 +25,7 @@ import solonarv.mods.thegreatweb.common.locator.filter.IFilter;
 import solonarv.mods.thegreatweb.common.locator.result.BlockResult;
 import solonarv.mods.thegreatweb.common.locator.selector.ISelector;
 import solonarv.mods.thegreatweb.common.locator.selector.Selectors;
-import solonarv.mods.thegreatweb.common.util.ChatUtil;
+import solonarv.mods.thegreatweb.common.lib.util.ChatUtil;
 
 import javax.annotation.Nonnull;
 import java.util.List;

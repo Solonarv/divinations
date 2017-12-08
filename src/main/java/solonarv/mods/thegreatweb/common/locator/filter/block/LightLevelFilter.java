@@ -1,6 +1,5 @@
 package solonarv.mods.thegreatweb.common.locator.filter.block;
 
-import jdk.nashorn.internal.ir.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
@@ -8,9 +7,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import solonarv.mods.thegreatweb.common.lib.IFactoryNBT;
-import solonarv.mods.thegreatweb.common.lib.Util;
+import solonarv.mods.thegreatweb.common.lib.util.ResourceLocationUtils;
 import solonarv.mods.thegreatweb.common.locator.filter.AbstractFilter;
-import solonarv.mods.thegreatweb.common.locator.filter.IFilter;
 import solonarv.mods.thegreatweb.common.locator.result.BlockResult;
 
 public class LightLevelFilter extends AbstractFilter<BlockResult> {
@@ -40,7 +38,7 @@ public class LightLevelFilter extends AbstractFilter<BlockResult> {
         return BlockResult.class;
     }
 
-    public static final ResourceLocation id = Util.resourceLocationWithDefaultDomain("lightLevel");
+    public static final ResourceLocation id = ResourceLocationUtils.resourceLocationWithDefaultDomain("lightLevel");
 
     public static final IFactoryNBT<LightLevelFilter> factory = new IFactoryNBT<LightLevelFilter>() {
         @Override

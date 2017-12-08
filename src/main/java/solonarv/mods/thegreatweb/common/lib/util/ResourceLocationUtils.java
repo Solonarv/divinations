@@ -1,9 +1,9 @@
-package solonarv.mods.thegreatweb.common.lib;
+package solonarv.mods.thegreatweb.common.lib.util;
 
 import net.minecraft.util.ResourceLocation;
 import solonarv.mods.thegreatweb.common.constants.Misc;
 
-public class Util {
+public class ResourceLocationUtils {
     public static ResourceLocation resourceLocationWithDefaultDomain(String s){
         String[] split = s.split(":", 2);
         if (split.length < 2) {

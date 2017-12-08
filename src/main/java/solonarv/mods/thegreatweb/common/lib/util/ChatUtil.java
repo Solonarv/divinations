@@ -1,6 +1,5 @@
-package solonarv.mods.thegreatweb.common.util;
+package solonarv.mods.thegreatweb.common.lib.util;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
