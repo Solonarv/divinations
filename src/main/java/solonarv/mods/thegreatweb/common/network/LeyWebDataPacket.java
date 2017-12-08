@@ -23,7 +23,8 @@ public class LeyWebDataPacket extends LeyWebPacketBase {
     @Override
     public void fromBytes(ByteBuf buf) {
         super.fromBytes(buf);
-        int numNodes = buf.readByte();
+
+        int numNodes = buf.readInt();
         nodes = new LeyNode[numNodes];
         for (int i=0; i < numNodes; i++) {
             int id = buf.readInt();
@@ -38,7 +39,8 @@ public class LeyWebDataPacket extends LeyWebPacketBase {
             int from = buf.readInt();
             int to = buf.readInt();
             int strength = buf.readInt();
-            edges[i] = new LeyLine(from, to, strength);
+            if (from != to)
+                edges[i] = new LeyLine(from, to, strength);
         }
     }
 
@@ -46,6 +48,7 @@ public class LeyWebDataPacket extends LeyWebPacketBase {
     public void toBytes(ByteBuf buf) {
         super.toBytes(buf);
         buf.writeInt(nodes.length);
+
         for (LeyNode node : nodes) {
             buf.writeInt(node.id);
             buf.writeInt(node.getX());
@@ -54,6 +57,9 @@ public class LeyWebDataPacket extends LeyWebPacketBase {
 
         buf.writeInt(edges.length);
         for (LeyLine edge : edges) {
+            if (edge == null)
+                edge = new LeyLine(0, 0, 0);
+
             buf.writeInt(edge.getSource());
             buf.writeInt(edge.getTarget());
             buf.writeInt(edge.getFlowAmount());
@@ -62,13 +68,15 @@ public class LeyWebDataPacket extends LeyWebPacketBase {
 
     public LeyWebDataPacket setFromData(LeyWebServer web, int groupX, int groupZ) {
         LeyNodeGroup group = web.getOrGenerateNodeGroup(groupX, groupZ, true);
-        nodes = new LeyNode[group.size() + 4];
 
+        nodes = new LeyNode[group.size() + 4];
         int i = 0;
+
         nodes[i++] = web.getNode(web.getNodeGroup(groupX, groupZ - 1).getSouthNode());
         nodes[i++] = web.getNode(web.getNodeGroup(groupX + 1, groupZ).getWestNode());
         nodes[i++] = web.getNode(web.getNodeGroup(groupX, groupZ + 1).getNorthNode());
         nodes[i++] = web.getNode(web.getNodeGroup(groupX + 1, groupZ).getEastNode());
+
         for (int id : group) {
             nodes[i++] = web.getNode(id);
         }

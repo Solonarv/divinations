@@ -8,7 +8,7 @@ public class LeyNode extends Vec3i {
     public final int id;
 
     public LeyNode(int xIn, int zIn, int id) {
-        super(xIn, 255, zIn);
+        super(xIn, 0, zIn);
         this.id = id;
     }
 

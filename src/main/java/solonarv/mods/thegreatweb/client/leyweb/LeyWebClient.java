@@ -51,7 +51,8 @@ public class LeyWebClient extends AbstractLeyWeb {
         }
 
         for (LeyLine leyLine : packet.getEdges()) {
-            _newLeyLine(leyLine.getSource(), leyLine.getTarget(), leyLine.getFlowAmount());
+            if (leyLine != null)
+                _newLeyLine(leyLine.getSource(), leyLine.getTarget(), leyLine.getFlowAmount());
         }
 
         pendingRequests.remove(Triple.of(groupX, groupZ, packet.getDimension()));

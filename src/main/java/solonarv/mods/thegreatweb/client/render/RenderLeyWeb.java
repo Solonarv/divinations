@@ -45,19 +45,21 @@ public class RenderLeyWeb {
     private static void renderNode(World world, RenderGlobal context, LeyNode node, float partialTicks) {
         GlStateManager.pushMatrix();
 
-        GlStateManager.translate(node.getX(), node.getY(), node.getZ());
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GlStateManager.alphaFunc(GL11.GL_GREATER, 0.05f);
+        EntityPlayer thePlayer = Minecraft.getMinecraft().player;
+
+        GlStateManager.translate(node.getX(), 255f, node.getZ());
+        GlStateManager.translate(-thePlayer.posX, -thePlayer.posY, -thePlayer.posZ);
+        GlStateManager.disableCull();
 
         double time = world.getTotalWorldTime() + partialTicks;
         Random random = new Random(node.hashCode());
         time += random.nextInt();
         int color = random.nextInt(0xFFFFFF);
 
+        float scale = 0.5f;
 
-        RenderHelper.renderStar(color, 1f, 1f, 1f, (float) time, random.nextLong());
+        RenderHelper.renderStar(color, scale, scale, scale, (float) time, random.nextLong());
 
+        GlStateManager.popMatrix();
     }
 }

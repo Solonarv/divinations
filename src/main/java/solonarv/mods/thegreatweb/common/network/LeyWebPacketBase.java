@@ -9,14 +9,14 @@ public abstract class LeyWebPacketBase implements IMessage {
     protected int dimension;
 
     @Override
-    public void fromBytes(ByteBuf buf) {
+    public void toBytes(ByteBuf buf) {
         buf.writeInt(dimension);
         buf.writeInt(groupX);
         buf.writeInt(groupZ);
     }
 
     @Override
-    public void toBytes(ByteBuf buf) {
+    public void fromBytes(ByteBuf buf) {
         dimension = buf.readInt();
         groupX = buf.readInt();
         groupZ = buf.readInt();
