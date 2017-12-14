@@ -17,7 +17,7 @@ public class TheGreatWeb {
 
     public static Logger logger;
 
-    @SidedProxy(serverSide = Misc.PROXY_COMMON, clientSide =  Misc.PROXY_CLIENT)
+    @SidedProxy(serverSide = Misc.PROXY_SERVER, clientSide =  Misc.PROXY_CLIENT)
     public static CommonProxy proxy;
     
     @EventHandler

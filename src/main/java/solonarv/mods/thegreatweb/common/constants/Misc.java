@@ -7,5 +7,6 @@ public class Misc {
 
     // Proxies
     public static final String PROXY_COMMON = "solonarv.mods.thegreatweb.common.core.CommonProxy";
+    public static final String PROXY_SERVER = "solonarv.mods.thegreatweb.common.core.ServerProxy";
     public static final String PROXY_CLIENT = "solonarv.mods.thegreatweb.client.core.ClientProxy";
 }

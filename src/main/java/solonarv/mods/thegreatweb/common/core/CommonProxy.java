@@ -10,15 +10,19 @@ import solonarv.mods.thegreatweb.common.locator.filter.Filters;
 import solonarv.mods.thegreatweb.common.locator.selector.Selectors;
 import solonarv.mods.thegreatweb.common.network.PacketHandler;
 
-public class CommonProxy {
+public abstract class CommonProxy {
     public void preInit(FMLPreInitializationEvent event) {
         Filters.init();
         Selectors.init();
         Consumers.init();
         PacketHandler.register(Misc.MOD_ID);
+
+        registerEventHandlers();
     }
 
     public void init(FMLInitializationEvent event) {
         NetworkRegistry.INSTANCE.registerGuiHandler(TheGreatWeb.instance, new GuiProxy());
     }
+
+    public  void registerEventHandlers() {}
 }

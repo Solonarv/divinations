@@ -21,7 +21,6 @@ public class PacketHandler {
 
     public static void registerPackets() {
         TheGreatWeb.logger.info("registering packets!");
-        channel.registerMessage(RequestLeyWebDataPacket.Handler.class, RequestLeyWebDataPacket.class, nextID(), Side.SERVER);
         channel.registerMessage(LeyWebDataPacket.Handler.class, LeyWebDataPacket.class, nextID(), Side.CLIENT);
     }
 

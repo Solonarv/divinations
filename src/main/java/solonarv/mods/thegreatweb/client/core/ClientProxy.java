@@ -21,4 +21,11 @@ public class ClientProxy extends CommonProxy {
         ModItems.initModels();
         ModBlocks.initModels();
     }
+
+    @Override
+    public void registerEventHandlers() {
+        super.registerEventHandlers();
+
+        MinecraftForge.EVENT_BUS.register(RenderLeyWeb.class);
+    }
 }

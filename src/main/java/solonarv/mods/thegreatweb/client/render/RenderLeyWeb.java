@@ -12,17 +12,24 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 import solonarv.mods.thegreatweb.client.helper.RenderHelper;
 import solonarv.mods.thegreatweb.client.leyweb.LeyWebClient;
+import solonarv.mods.thegreatweb.common.TheGreatWeb;
 import solonarv.mods.thegreatweb.common.constants.Misc;
 import solonarv.mods.thegreatweb.common.leyweb.LeyNode;
 import solonarv.mods.thegreatweb.common.lib.util.MathUtil;
 
 import java.util.Random;
 
-@Mod.EventBusSubscriber(value = Side.CLIENT, modid = Misc.MOD_ID)
 @SideOnly(Side.CLIENT)
 public class RenderLeyWeb {
+
+    private static boolean saidHello = false;
+
     @SubscribeEvent
     public static void renderWorldLast(RenderWorldLastEvent event) {
+        if (!saidHello) {
+            TheGreatWeb.logger.debug("Rendering ley web!");
+            saidHello = true;
+        }
         renderWeb(event.getContext(), event.getPartialTicks());
     }
 
@@ -36,8 +43,6 @@ public class RenderLeyWeb {
 
         int chunkX = MathUtil.floor(thePlayer.posX / 16);
         int chunkZ = MathUtil.floor(thePlayer.posZ / 16);
-
-        leyWeb.queueWebForFetching(chunkX, chunkZ, renderDistance);
 
         leyWeb.nodesAround(chunkX, chunkZ, renderDistance).forEach(node -> renderNode(world, context, node, partialTicks));
     }
