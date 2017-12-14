@@ -26,4 +26,9 @@ public class LeyLine {
     public int getTarget() {
         return target;
     }
+
+    @Override
+    public String toString() {
+        return String.format("LeyLine[source=%d, target%d, flowAmount=%d]", source, target, flowAmount);
+    }
 }

@@ -16,4 +16,8 @@ public class LeyNode extends Vec3i {
         return new BlockPos(this);
     }
 
+    @Override
+    public String toString() {
+        return String.format("LeyNode[x=%d, z=%d, id=%d]", getX(), getZ(), id);
+    }
 }

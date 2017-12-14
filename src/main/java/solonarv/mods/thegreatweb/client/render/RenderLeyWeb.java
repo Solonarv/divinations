@@ -47,7 +47,7 @@ public class RenderLeyWeb {
 
         EntityPlayer thePlayer = Minecraft.getMinecraft().player;
 
-        GlStateManager.translate(node.getX(), 255f, node.getZ());
+        GlStateManager.translate(node.getX(), 100f, node.getZ());
         GlStateManager.translate(-thePlayer.posX, -thePlayer.posY, -thePlayer.posZ);
         GlStateManager.disableCull();
 

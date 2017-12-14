@@ -47,8 +47,8 @@ public abstract class AbstractLeyWeb extends WorldSavedData implements ILeyWeb {
      */
     protected Map<Pair<Integer, Integer>, LeyLine> leyLines;
 
-    public AbstractLeyWeb() {
-        super(DATA_NAME);
+    public AbstractLeyWeb(String dataName) {
+        super(dataName);
         adjacencyMap = new HashMap<>(128);
         nodes = new HashMap<>(128);
         nodeGroups = new HashMap<>(32);
@@ -140,28 +140,28 @@ public abstract class AbstractLeyWeb extends WorldSavedData implements ILeyWeb {
     }
 
     private Stream<LeyLine> _leyLinesAround(int nodeID) {
-        return adjacencyMap
-                .get(nodeID)
-                .stream()
+        return getAdjacentNodeIDs(nodeID)
                 .flatMap(otherID -> Stream.of(leyLines.get(Pair.of(nodeID, otherID)), leyLines.get(Pair.of(otherID,  nodeID))));
     }
 
     @Override
     public Collection<LeyLine> leyLinesFrom(LeyNode node) {
-        return adjacencyMap
-                .get(node.id)
-                .stream()
+        return getAdjacentNodeIDs(node.id)
                 .map(otherID -> leyLines.get(Pair.of(node.id, otherID)))
                 .collect(Collectors.toList());
     }
 
     @Override
     public Collection<LeyLine> leyLinesTo(LeyNode node) {
-        return adjacencyMap
-                .get(node.id)
-                .stream()
+        return getAdjacentNodeIDs(node.id)
                 .map(otherID -> leyLines.get(Pair.of(otherID, node.id)))
                 .collect(Collectors.toList());
+    }
+
+    // Returns (a stream of) adjacencyMap.get(nodeID), or the empty stream if there is no entry in the adjacency map.
+    private Stream<Integer> getAdjacentNodeIDs(int nodeID) {
+        Collection<Integer> adj = adjacencyMap.get(nodeID);
+        return adj != null ? adj.stream() : Stream.empty();
     }
 
     @Override

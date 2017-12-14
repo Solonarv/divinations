@@ -17,7 +17,12 @@ import java.util.*;
 
 public class LeyWebServer extends AbstractLeyWeb {
 
+    private static final boolean GEN_SIMPLE = true;
     private int nextNodeID;
+
+    public LeyWebServer(String dataName) {
+        super(dataName);
+    }
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
@@ -83,7 +88,7 @@ public class LeyWebServer extends AbstractLeyWeb {
         LeyWebServer instance = (LeyWebServer) storage.getOrLoadData(LeyWebServer.class, DATA_NAME);
 
         if (instance == null) {
-            instance = new LeyWebServer();
+            instance = new LeyWebServer(DATA_NAME);
             storage.setData(DATA_NAME, instance);
         }
 
@@ -94,7 +99,7 @@ public class LeyWebServer extends AbstractLeyWeb {
         return !getNodeGroup(groupX, groupZ).isEmpty();
     }
 
-    public LeyNode newLeyNode(int x, int y, int z) {
+    public LeyNode newLeyNode(int x, int z) {
         int id = nextNodeID++;
         LeyNode node = new LeyNode(x, z, id);
 
@@ -122,141 +127,178 @@ public class LeyWebServer extends AbstractLeyWeb {
         LeyNodeGroup group = getNodeGroup(groupX, groupZ);
         // If this group isn't generated yet, randomly place nodes based on the world seed
         if (group.isEmpty()) {
-            // Get the overworld
-            World overworld = DimensionManager.getWorld(0);
-
-            // combine groupX and groupZ into a long, add magic number, season with a pinch of world seed
-            long seed = overworld.getSeed() ^ (173 * ((long)groupX << 32 + (long) groupZ));
-            Random rand = new Random(seed);
-
-            // For use below
-            int x, y, z, dist;
-            int offsetX = groupX * GROUP_SIZE_BLOCKS;
-            int offsetZ = groupZ * GROUP_SIZE_BLOCKS;
-            int center = GROUP_SIZE_BLOCKS / 2;
-            IntRange range = new IntRange(0, GROUP_SIZE_BLOCKS - 1);
-
-            // Generate the node in the NORTH (lower Z) quadrant
-            x = range.random(rand);
-            dist = Math.abs(x - center);
-            z = range.withMax(dist).random(rand);
-            y = overworld.getHeight(x, z);
-            LeyNode nodeNorth = newLeyNode(offsetX + x, y, offsetZ + z);
-
-            // Generate the node in the SOUTH (higher offsetZ + z) quadrant
-            x = range.random(rand);
-            dist = Math.abs(x - center);
-            z = range.withMin(dist).random(rand);
-            y = overworld.getHeight(offsetX + x, offsetZ + z);
-            LeyNode nodeSouth = newLeyNode(offsetX + x, y, offsetZ + z);
-
-            // Generate the node in the WEST (lower X) quadrant
-            z = range.random(rand);
-            dist = Math.abs(z - center);
-            x = range.withMax(dist).random(rand);
-            y = overworld.getHeight(offsetX + x, offsetZ + z);
-            LeyNode nodeWest = newLeyNode(offsetX + x, y, offsetZ + z);
-
-            // Generate the node in the EAST (higher X) quadrant
-            z = range.random(rand);
-            dist = Math.abs(z - center);
-            x = range.withMax(dist).random(rand);
-            y = overworld.getHeight(offsetX + x, offsetZ + z);
-            LeyNode nodeEast = newLeyNode(offsetX + x, y, offsetZ + z);
-
-            double u, v;
-            // Do internal connections, in one of several possible styles
-            switch (LeyNodeGroup.ConnectionStyle.randomStyle(rand)) {
-
-                case SIMPLE:
-                    newRandomLeyLine(nodeNorth, nodeEast);
-                    newRandomLeyLine(nodeNorth, nodeWest);
-                    newRandomLeyLine(nodeSouth, nodeEast);
-                    newRandomLeyLine(nodeSouth, nodeWest);
-                    break;
-                case DIAGONAL:
-                    // randomly pick NE-SW or NW-SE diagonal
-                    if (rand.nextBoolean()) {
-                        // NE-SW diagonal was picked
-                        generateDiagonalInGroup(overworld, rand, nodeNorth, nodeSouth, nodeEast, nodeWest);
-
-                    } else {
-                        // NW-SE diagonal was picked
-                        generateDiagonalInGroup(overworld, rand, nodeNorth, nodeSouth, nodeWest, nodeEast);
-                    }
-                    break;
-                case TRIANGULAR:
-                    LeyNode nodeNE, nodeSE, nodeSW, nodeNW, nodeCenter;
-                    Vec3i centerPos;
-                    // randomly pick one of the four edges to leave as normal
-                    switch (rand.nextInt(4)){
-                        case 0: // NE edge is normal
-                            newRandomLeyLine(nodeNorth, nodeEast);
-                            nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
-                            nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
-                            nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
-                            centerPos = MathUtil.geometricCenter(nodeSE, nodeSW, nodeNW);
-                            nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeSE, nodeCenter);
-                            newRandomLeyLine(nodeSW, nodeCenter);
-                            newRandomLeyLine(nodeNW, nodeCenter);
-                            break;
-                        case 1: // SE edge is normal
-                            newRandomLeyLine(nodeSouth, nodeEast);
-                            nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
-                            nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
-                            nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
-                            centerPos = MathUtil.geometricCenter(nodeNE, nodeSW, nodeNW);
-                            nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeNE, nodeCenter);
-                            newRandomLeyLine(nodeSW, nodeCenter);
-                            newRandomLeyLine(nodeNW, nodeCenter);
-                        case 2: // SW edge is normal
-                            newRandomLeyLine(nodeSouth, nodeWest);
-                            nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
-                            nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
-                            nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
-                            centerPos = MathUtil.geometricCenter(nodeNE, nodeSE, nodeNW);
-                            nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeNE, nodeCenter);
-                            newRandomLeyLine(nodeSE, nodeCenter);
-                            newRandomLeyLine(nodeNW, nodeCenter);
-                        case 3: // NW edge is normal
-                            newRandomLeyLine(nodeNorth, nodeWest);
-                            nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
-                            nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
-                            nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
-                            centerPos = MathUtil.geometricCenter(nodeNE, nodeSE, nodeSW);
-                            nodeCenter = newLeyNode(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            newRandomLeyLine(nodeNE, nodeCenter);
-                            newRandomLeyLine(nodeSE, nodeCenter);
-                            newRandomLeyLine(nodeSW, nodeCenter);
-                    }
-                    break;
-            }
-
-            group.setNorthNode(nodeNorth.id);
-            group.setEastNode(nodeEast.id);
-            group.setSouthNode(nodeSouth.id);
-            group.setWestNode(nodeWest.id);
-
-            if (connectToNeighbors) {
-
-                LeyNodeGroup groupNorth = getOrGenerateNodeGroup(groupX, groupZ - 1, false);
-                newRandomLeyLine(nodeNorth, getNode(groupNorth.getSouthNode()));
-
-                LeyNodeGroup groupEast = getOrGenerateNodeGroup(groupX + 1, groupZ, false);
-                newRandomLeyLine(nodeEast, getNode(groupEast.getWestNode()));
-
-                LeyNodeGroup groupSouth = getOrGenerateNodeGroup(groupX, groupZ + 1, false);
-                newRandomLeyLine(nodeSouth, getNode(groupSouth.getNorthNode()));
-
-                LeyNodeGroup groupWest = getOrGenerateNodeGroup(groupX - 1, groupZ, false);
-                newRandomLeyLine(nodeWest, getNode(groupWest.getEastNode()));
-
-            }
+            if (GEN_SIMPLE)
+                generateGroupSimple(groupX, groupZ, connectToNeighbors, group);
+            else
+                generateGroup(groupX, groupZ, connectToNeighbors, group);
         }
         return group;
+    }
+
+    private void generateGroupSimple(int groupX, int groupZ, boolean connectToNeighbors, LeyNodeGroup group) {
+        int offsetX = groupX * GROUP_SIZE_BLOCKS;
+        int offsetZ = groupZ * GROUP_SIZE_BLOCKS;
+        int center = GROUP_SIZE_BLOCKS / 2;
+
+        LeyNode nodeNorth = newLeyNode(offsetX + center, offsetZ + center/2);
+        LeyNode nodeSouth = newLeyNode(offsetX + center, offsetZ + center*3/2);
+        LeyNode nodeWest = newLeyNode(offsetX + center/2, offsetZ + center);
+        LeyNode nodeEast = newLeyNode(offsetX + center*3/2, offsetZ + center);
+
+        group.setNorthNode(nodeNorth.id);
+        group.setEastNode(nodeEast.id);
+        group.setSouthNode(nodeSouth.id);
+        group.setWestNode(nodeWest.id);
+
+        if (connectToNeighbors) {
+            LeyNodeGroup groupNorth = getOrGenerateNodeGroup(groupX, groupZ - 1, false);
+            newRandomLeyLine(nodeNorth, getNode(groupNorth.getSouthNode()));
+
+            LeyNodeGroup groupEast = getOrGenerateNodeGroup(groupX + 1, groupZ, false);
+            newRandomLeyLine(nodeEast, getNode(groupEast.getWestNode()));
+
+            LeyNodeGroup groupSouth = getOrGenerateNodeGroup(groupX, groupZ + 1, false);
+            newRandomLeyLine(nodeSouth, getNode(groupSouth.getNorthNode()));
+
+            LeyNodeGroup groupWest = getOrGenerateNodeGroup(groupX - 1, groupZ, false);
+            newRandomLeyLine(nodeWest, getNode(groupWest.getEastNode()));
+        }
+    }
+
+    private void generateGroup(int groupX, int groupZ, boolean connectToNeighbors, LeyNodeGroup group) {
+        // Get the overworld
+        World overworld = DimensionManager.getWorld(0);
+
+        // combine groupX and groupZ into a long, add magic number, season with a pinch of world seed
+        long seed = overworld.getSeed() ^ (173 * ((long)groupX << 32 + (long) groupZ));
+        Random rand = new Random(seed);
+
+        // For use below
+        int x, y, z, dist;
+        int offsetX = groupX * GROUP_SIZE_BLOCKS;
+        int offsetZ = groupZ * GROUP_SIZE_BLOCKS;
+        int center = GROUP_SIZE_BLOCKS / 2;
+        IntRange range = new IntRange(0, GROUP_SIZE_BLOCKS - 1);
+
+        // Generate the node in the NORTH (lower Z) quadrant
+        x = range.random(rand);
+        dist = Math.abs(x - center);
+        z = range.withMax(dist).random(rand);
+        y = overworld.getHeight(x, z);
+        LeyNode nodeNorth = newLeyNode(offsetX + x, offsetZ + z);
+
+        // Generate the node in the SOUTH (higher offsetZ + z) quadrant
+        x = range.random(rand);
+        dist = Math.abs(x - center);
+        z = range.withMin(dist).random(rand);
+        y = overworld.getHeight(offsetX + x, offsetZ + z);
+        LeyNode nodeSouth = newLeyNode(offsetX + x, offsetZ + z);
+
+        // Generate the node in the WEST (lower X) quadrant
+        z = range.random(rand);
+        dist = Math.abs(z - center);
+        x = range.withMax(dist).random(rand);
+        y = overworld.getHeight(offsetX + x, offsetZ + z);
+        LeyNode nodeWest = newLeyNode(offsetX + x, offsetZ + z);
+
+        // Generate the node in the EAST (higher X) quadrant
+        z = range.random(rand);
+        dist = Math.abs(z - center);
+        x = range.withMax(dist).random(rand);
+        y = overworld.getHeight(offsetX + x, offsetZ + z);
+        LeyNode nodeEast = newLeyNode(offsetX + x, offsetZ + z);
+
+        double u, v;
+        // Do internal connections, in one of several possible styles
+        switch (LeyNodeGroup.ConnectionStyle.randomStyle(rand)) {
+
+            case SIMPLE:
+                newRandomLeyLine(nodeNorth, nodeEast);
+                newRandomLeyLine(nodeNorth, nodeWest);
+                newRandomLeyLine(nodeSouth, nodeEast);
+                newRandomLeyLine(nodeSouth, nodeWest);
+                break;
+            case DIAGONAL:
+                // randomly pick NE-SW or NW-SE diagonal
+                if (rand.nextBoolean()) {
+                    // NE-SW diagonal was picked
+                    generateDiagonalInGroup(overworld, rand, nodeNorth, nodeSouth, nodeEast, nodeWest);
+
+                } else {
+                    // NW-SE diagonal was picked
+                    generateDiagonalInGroup(overworld, rand, nodeNorth, nodeSouth, nodeWest, nodeEast);
+                }
+                break;
+            case TRIANGULAR:
+                LeyNode nodeNE, nodeSE, nodeSW, nodeNW, nodeCenter;
+                Vec3i centerPos;
+                // randomly pick one of the four edges to leave as normal
+                switch (rand.nextInt(4)){
+                    case 0: // NE edge is normal
+                        newRandomLeyLine(nodeNorth, nodeEast);
+                        nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
+                        nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
+                        nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
+                        centerPos = MathUtil.geometricCenter(nodeSE, nodeSW, nodeNW);
+                        nodeCenter = newLeyNode(centerPos.getX(), centerPos.getZ());
+                        newRandomLeyLine(nodeSE, nodeCenter);
+                        newRandomLeyLine(nodeSW, nodeCenter);
+                        newRandomLeyLine(nodeNW, nodeCenter);
+                        break;
+                    case 1: // SE edge is normal
+                        newRandomLeyLine(nodeSouth, nodeEast);
+                        nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
+                        nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
+                        nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
+                        centerPos = MathUtil.geometricCenter(nodeNE, nodeSW, nodeNW);
+                        nodeCenter = newLeyNode(centerPos.getX(), centerPos.getZ());
+                        newRandomLeyLine(nodeNE, nodeCenter);
+                        newRandomLeyLine(nodeSW, nodeCenter);
+                        newRandomLeyLine(nodeNW, nodeCenter);
+                    case 2: // SW edge is normal
+                        newRandomLeyLine(nodeSouth, nodeWest);
+                        nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
+                        nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
+                        nodeNW = generateNodeOnEdge(overworld, rand, nodeNorth, nodeWest, false, false);
+                        centerPos = MathUtil.geometricCenter(nodeNE, nodeSE, nodeNW);
+                        nodeCenter = newLeyNode(centerPos.getX(), centerPos.getZ());
+                        newRandomLeyLine(nodeNE, nodeCenter);
+                        newRandomLeyLine(nodeSE, nodeCenter);
+                        newRandomLeyLine(nodeNW, nodeCenter);
+                    case 3: // NW edge is normal
+                        newRandomLeyLine(nodeNorth, nodeWest);
+                        nodeNE = generateNodeOnEdge(overworld, rand, nodeNorth, nodeEast, true, false);
+                        nodeSE = generateNodeOnEdge(overworld, rand, nodeSouth, nodeEast, true, true);
+                        nodeSW = generateNodeOnEdge(overworld, rand, nodeSouth, nodeWest, false, true);
+                        centerPos = MathUtil.geometricCenter(nodeNE, nodeSE, nodeSW);
+                        nodeCenter = newLeyNode(centerPos.getX(), centerPos.getZ());
+                        newRandomLeyLine(nodeNE, nodeCenter);
+                        newRandomLeyLine(nodeSE, nodeCenter);
+                        newRandomLeyLine(nodeSW, nodeCenter);
+                }
+                break;
+        }
+
+        group.setNorthNode(nodeNorth.id);
+        group.setEastNode(nodeEast.id);
+        group.setSouthNode(nodeSouth.id);
+        group.setWestNode(nodeWest.id);
+
+        if (connectToNeighbors) {
+
+            LeyNodeGroup groupNorth = getOrGenerateNodeGroup(groupX, groupZ - 1, false);
+            newRandomLeyLine(nodeNorth, getNode(groupNorth.getSouthNode()));
+
+            LeyNodeGroup groupEast = getOrGenerateNodeGroup(groupX + 1, groupZ, false);
+            newRandomLeyLine(nodeEast, getNode(groupEast.getWestNode()));
+
+            LeyNodeGroup groupSouth = getOrGenerateNodeGroup(groupX, groupZ + 1, false);
+            newRandomLeyLine(nodeSouth, getNode(groupSouth.getNorthNode()));
+
+            LeyNodeGroup groupWest = getOrGenerateNodeGroup(groupX - 1, groupZ, false);
+            newRandomLeyLine(nodeWest, getNode(groupWest.getEastNode()));
+
+        }
     }
 
     private void generateDiagonalInGroup(World overworld, Random rand, LeyNode nodeNorth, LeyNode nodeSouth, LeyNode nodeNorthComplex, LeyNode nodeSouthComplex) {
@@ -299,7 +341,7 @@ public class LeyWebServer extends AbstractLeyWeb {
         x = new IntRange(nodeU.getX(), nodeV.getX()).weightedAverage(u);
         z = new IntRange(nodeU.getZ(), nodeV.getZ()).weightedAverage(v);
         y = overworld.getHeight(x, z);
-        LeyNode nodeNorthInner = newLeyNode(x, y, z);
+        LeyNode nodeNorthInner = newLeyNode(x, z);
         newRandomLeyLine(nodeU, nodeNorthInner);
         newRandomLeyLine(nodeNorthInner, nodeV);
         return nodeNorthInner;
