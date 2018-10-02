@@ -7,7 +7,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
-import solonarv.mods.thegreatweb.client.render.RenderLeyWeb;
 import solonarv.mods.thegreatweb.common.block.ModBlocks;
 import solonarv.mods.thegreatweb.common.constants.Misc;
 import solonarv.mods.thegreatweb.common.core.CommonProxy;
@@ -25,7 +24,5 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void registerEventHandlers() {
         super.registerEventHandlers();
-
-        MinecraftForge.EVENT_BUS.register(RenderLeyWeb.class);
     }
 }

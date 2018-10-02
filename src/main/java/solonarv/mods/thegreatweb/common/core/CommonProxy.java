@@ -5,6 +5,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import solonarv.mods.thegreatweb.common.TheGreatWeb;
 import solonarv.mods.thegreatweb.common.constants.Misc;
+import solonarv.mods.thegreatweb.common.entity.ModEntities;
 import solonarv.mods.thegreatweb.common.locator.consumer.Consumers;
 import solonarv.mods.thegreatweb.common.locator.filter.Filters;
 import solonarv.mods.thegreatweb.common.locator.selector.Selectors;
@@ -15,6 +16,9 @@ public abstract class CommonProxy {
         Filters.init();
         Selectors.init();
         Consumers.init();
+
+        ModEntities.init();
+
         PacketHandler.register(Misc.MOD_ID);
 
         registerEventHandlers();
