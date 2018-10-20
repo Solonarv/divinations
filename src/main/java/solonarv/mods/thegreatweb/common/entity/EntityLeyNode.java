@@ -5,6 +5,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
@@ -13,15 +14,17 @@ import org.apache.commons.lang3.tuple.Pair;
 import solonarv.mods.thegreatweb.common.leyweb.LeyWebHelper;
 import solonarv.mods.thegreatweb.common.lib.util.MathUtil;
 
+import java.util.Arrays;
+
 public class EntityLeyNode extends Entity {
 
     private static final String TAG_SIZE = "size";
     private int size = 0;
 
-    private static final String TAG_NEXTX = "nextX";
-    private int nextX = 0;
-    private static final String TAG_NEXTZ = "nextZ";
-    private int nextZ = 0;
+    private static final String TAG_NEXTINDEX = "nextIndex";
+    private int nextIndex = 0;
+
+    private int blockX, blockZ;
 
     private static final String TAG_MAPWEIGHTS = "mapWeights";
     private float[] weightForColumn = new float[BLOCK_INFLUENCE_DIAMETER];
@@ -31,6 +34,7 @@ public class EntityLeyNode extends Entity {
     public static int BLOCK_INFLUENCE_RADIUS = 48;
     public static int BLOCK_INFLUENCE_DIAMETER = 2 * BLOCK_INFLUENCE_RADIUS + 1;
     public static int BLOCKS_IN_RADIUS = BLOCK_INFLUENCE_DIAMETER * BLOCK_INFLUENCE_DIAMETER;
+    public static int CHECK_INDEX_STEP = MathUtil.nextLowestPowerOf2(BLOCKS_IN_RADIUS);
 
     public static final double BLOCK_ATTRACT_FACTOR = 1;
 
@@ -47,8 +51,7 @@ public class EntityLeyNode extends Entity {
     @Override
     protected void readEntityFromNBT(NBTTagCompound compound) {
         size = compound.getInteger(TAG_SIZE);
-        nextX = compound.getInteger(TAG_NEXTX);
-        nextZ = compound.getInteger(TAG_NEXTZ);
+        nextIndex = compound.getInteger(TAG_NEXTINDEX);
 
         NBTTagList weights = compound.getTagList(TAG_MAPWEIGHTS, Constants.NBT.TAG_FLOAT);
         for (int i = 0; i < BLOCKS_IN_RADIUS; i++) {
@@ -64,8 +67,7 @@ public class EntityLeyNode extends Entity {
     @Override
     protected void writeEntityToNBT(NBTTagCompound compound) {
         compound.setInteger(TAG_SIZE, size);
-        compound.setInteger(TAG_NEXTX, nextX);
-        compound.setInteger(TAG_NEXTZ, nextZ);
+        compound.setInteger(TAG_NEXTINDEX, nextIndex);
 
         NBTTagList weights = new NBTTagList();
         for (int i = 0; i < BLOCKS_IN_RADIUS; i++) {
@@ -87,25 +89,46 @@ public class EntityLeyNode extends Entity {
         if (world.isRemote)
             return;
 
-        int originX = MathUtil.floor(posX);
-        int originZ = MathUtil.floor(posZ);
+        updateBlockCoords();
 
-        int x = originX + nextX;
-        int z = originZ + nextZ;
+        checkNextColumn();
 
-        int ix = nextX * BLOCK_INFLUENCE_DIAMETER + nextZ;
-        weightForColumn[ix] = 0;
-        elevationForColumn[ix] = 0;
+        updateMovement();
+    }
+
+    private void checkNextColumn() {
+        int offsetX = nextIndex % BLOCK_INFLUENCE_DIAMETER - BLOCK_INFLUENCE_RADIUS;
+        int offsetZ = nextIndex / BLOCK_INFLUENCE_DIAMETER - BLOCK_INFLUENCE_RADIUS;
+
+        int x = blockX + offsetX;
+        int z = blockZ + offsetZ;
+
+        weightForColumn[nextIndex] = 0;
+        elevationForColumn[nextIndex] = 0;
 
         int maxY = world.getHeight(x, z);
 
         for (BlockPos pos : BlockPos.getAllInBoxMutable(x, 0, z, x, maxY, z)) {
             double wt = LeyWebHelper.getLeyWeightForBlock(world, pos);
-            weightForColumn[ix] += wt;
-            elevationForColumn[ix] += wt * pos.getY();
+            weightForColumn[nextIndex] += wt;
+            elevationForColumn[nextIndex] += wt * pos.getY();
         }
 
-        updateMovement();
+        nextIndex += CHECK_INDEX_STEP;
+        nextIndex %= BLOCKS_IN_RADIUS;
+    }
+
+    private void updateBlockCoords() {
+        int newBlockX = MathHelper.floor(posX);
+        int newBlockZ = MathHelper.floor(posZ);
+
+        if ( blockX != newBlockX || blockZ != newBlockZ ) {
+            Arrays.fill(weightForColumn, 0);
+            Arrays.fill(elevationForColumn, 0);
+
+            blockX = newBlockX;
+            blockZ = newBlockZ;
+        }
     }
 
     private void updateMovement() {
