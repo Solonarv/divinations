@@ -1,7 +1,8 @@
 language: java
 jdk: oraclejdk8
 before_install:
-- chmod +x ./get-forge.sh
-- ./get-forge.sh
+  - chmod +x ./get-forge.sh
+  - ./get-forge.sh
+  - chmod +x ./gradlew
 install: ./gradlew setupCiWorkspace
 script: ./gradlew build
