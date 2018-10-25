@@ -1,0 +1,6 @@
+language: java
+jdk: oraclejdk8
+before_install:
+- ./get-forge.sh
+install: ./gradlew setupCiWorkspace
+script: ./gradlew build
