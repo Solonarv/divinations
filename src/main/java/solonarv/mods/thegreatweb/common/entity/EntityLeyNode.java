@@ -1,6 +1,7 @@
 package solonarv.mods.thegreatweb.common.entity;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagList;
@@ -11,9 +12,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import solonarv.mods.thegreatweb.common.TheGreatWeb;
 import solonarv.mods.thegreatweb.common.leyweb.LeyWebHelper;
+import solonarv.mods.thegreatweb.common.lib.util.EntityHelper;
 import solonarv.mods.thegreatweb.common.lib.util.MathUtil;
 
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 
 public class EntityLeyNode extends Entity {
@@ -27,16 +31,16 @@ public class EntityLeyNode extends Entity {
     private int blockX, blockZ;
 
     private static final String TAG_MAPWEIGHTS = "mapWeights";
-    private float[] weightForColumn = new float[BLOCK_INFLUENCE_DIAMETER];
+    private float[] weightForColumn = new float[BLOCKS_IN_RADIUS];
     private static final String TAG_MAPELEVATIONS = "mapElevations";
-    private float[] elevationForColumn = new float[BLOCK_INFLUENCE_DIAMETER];
+    private float[] elevationForColumn = new float[BLOCKS_IN_RADIUS];
 
     public static int BLOCK_INFLUENCE_RADIUS = 48;
     public static int BLOCK_INFLUENCE_DIAMETER = 2 * BLOCK_INFLUENCE_RADIUS + 1;
     public static int BLOCKS_IN_RADIUS = BLOCK_INFLUENCE_DIAMETER * BLOCK_INFLUENCE_DIAMETER;
     public static int CHECK_INDEX_STEP = MathUtil.nextLowestPowerOf2(BLOCKS_IN_RADIUS);
 
-    public static final double BLOCK_ATTRACT_FACTOR = 1;
+    public static final double BLOCK_ATTRACT_FACTOR = 0.01;
 
     public EntityLeyNode(World worldIn) {
         super(worldIn);
@@ -49,35 +53,37 @@ public class EntityLeyNode extends Entity {
     }
 
     @Override
-    protected void readEntityFromNBT(NBTTagCompound compound) {
+    protected void readEntityFromNBT(@Nonnull NBTTagCompound compound) {
         size = compound.getInteger(TAG_SIZE);
         nextIndex = compound.getInteger(TAG_NEXTINDEX);
 
         NBTTagList weights = compound.getTagList(TAG_MAPWEIGHTS, Constants.NBT.TAG_FLOAT);
-        for (int i = 0; i < BLOCKS_IN_RADIUS; i++) {
-            weightForColumn[i] = weights.getFloatAt(i);
-        }
+        if ( weights.tagCount() == BLOCKS_IN_RADIUS )
+            for (int i = 0; i < BLOCKS_IN_RADIUS; i++) {
+                weightForColumn[i] = weights.getFloatAt(i);
+            }
 
         NBTTagList elevations = compound.getTagList(TAG_MAPELEVATIONS, Constants.NBT.TAG_FLOAT);
-        for(int i = 0; i < BLOCKS_IN_RADIUS; i++) {
-            elevationForColumn[i] = elevations.getFloatAt(i);
-        }
+        if ( elevations.tagCount() == BLOCKS_IN_RADIUS )
+            for(int i = 0; i < BLOCKS_IN_RADIUS; i++) {
+                elevationForColumn[i] = elevations.getFloatAt(i);
+            }
     }
 
     @Override
-    protected void writeEntityToNBT(NBTTagCompound compound) {
+    protected void writeEntityToNBT(@Nonnull NBTTagCompound compound) {
         compound.setInteger(TAG_SIZE, size);
         compound.setInteger(TAG_NEXTINDEX, nextIndex);
 
         NBTTagList weights = new NBTTagList();
         for (int i = 0; i < BLOCKS_IN_RADIUS; i++) {
-            weights.set(i, new NBTTagFloat(weightForColumn[i]));
+            weights.appendTag(new NBTTagFloat(weightForColumn[i]));
         }
         compound.setTag(TAG_MAPWEIGHTS, weights);
 
         NBTTagList elevations = new NBTTagList();
         for (int i = 0; i < BLOCKS_IN_RADIUS; i++) {
-            elevations.set(i, new NBTTagFloat(elevationForColumn[i]));
+            elevations.appendTag(new NBTTagFloat(elevationForColumn[i]));
         }
         compound.setTag(TAG_MAPELEVATIONS, elevations);
     }
@@ -89,11 +95,13 @@ public class EntityLeyNode extends Entity {
         if (world.isRemote)
             return;
 
-        updateBlockCoords();
-
-        checkNextColumn();
+        for (int i = 0; i < BLOCK_INFLUENCE_DIAMETER; i++) {
+            updateBlockCoords();
+            checkNextColumn();
+        }
 
         updateMovement();
+
     }
 
     private void checkNextColumn() {
@@ -138,6 +146,11 @@ public class EntityLeyNode extends Entity {
         Vec3d accel = offset.normalize().scale(weight * BLOCK_ATTRACT_FACTOR / (offset.lengthSquared()));
         // TODO: interaction with neighbors
         addVelocity(accel.x, accel.y, accel.z);
+        move(MoverType.SELF, motionX, motionY, motionZ);
+        if (this.ticksExisted % 100 == 0) {
+            TheGreatWeb.logger.info("ley node accelerated by: " + accel);
+            TheGreatWeb.logger.info("velocity is now: " + EntityHelper.getEntityMotion(this));
+        }
     }
 
     public Pair<Vec3d, Double> getMoveOffsetAndWeight() {
