@@ -21,4 +21,8 @@ public class MathUtil {
     public static int nextLowestPowerOf2(int x) {
         return (int) Math.pow(2, Math.floor(MathHelper.log2(x)));
     }
+
+    public static double normSq(double x, double y, double z) {
+        return x*x + y*y + z*z;
+    }
 }
