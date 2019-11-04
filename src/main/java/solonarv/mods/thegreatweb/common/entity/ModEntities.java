@@ -8,7 +8,7 @@ import solonarv.mods.thegreatweb.common.lib.util.ResourceLocationUtils;
 public class ModEntities {
 
     public static void init() {
-        registerEntity("leyNode", EntityLeyNode.class, 128, 5, true);
+        registerEntity("webNode", EntityWebNode.class, 128, 5, true);
     }
 
     private static int nextID = 1;

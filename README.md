@@ -4,7 +4,8 @@
 
 A Minecraft mod, currently in very early development.
 
-Flows of magical energy crisscross across the world, forming a Great Web that connects everything.
+Above the clouds, light streams across the world. The streams meet and connect, forming
+nodes and faces (always triangular). 
 
 Implemented features:
 
@@ -14,7 +15,7 @@ Partially implemented features:
 
  - Locators: items that allows you to find nearby things (blocks/entities/structures). The basic system for them is in place,
    but there is no way to create them without `/give` and the system needs to be "filled in" with search filters.
- - Ley nodes: entities that are attracted/repulsed by certain nearby blocks and make up the Great Web.
+ - ~~Web nodes: entities that are attracted/repulsed by certain nearby blocks and make up the Great Web.~~
 
 Planned features:
 

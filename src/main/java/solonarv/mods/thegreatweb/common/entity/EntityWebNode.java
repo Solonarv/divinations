@@ -4,17 +4,16 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.MoverType;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import scala.actors.threadpool.Arrays;
-import solonarv.mods.thegreatweb.common.leyweb.LeyWebHelper;
+import solonarv.mods.thegreatweb.common.lightweb.WebHelper;
 import solonarv.mods.thegreatweb.common.lib.util.MathUtil;
 import solonarv.mods.thegreatweb.common.lib.util.NBTHelper;
 
 import javax.annotation.Nonnull;
 
-public class EntityLeyNode extends Entity {
+public class EntityWebNode extends Entity {
 
     private static final String TAG_SIZE = "size";
     private double size = 0;
@@ -46,7 +45,7 @@ public class EntityLeyNode extends Entity {
 
     private static final double BLOCK_ATTRACT_FACTOR = 1e-7;
 
-    public EntityLeyNode(World worldIn) {
+    public EntityWebNode(World worldIn) {
         super(worldIn);
         isImmuneToFire = true;
         noClip = true;
@@ -110,7 +109,7 @@ public class EntityLeyNode extends Entity {
         double forceX = 0, forceY = 0, forceZ = 0;
 
         for (BlockPos pos : BlockPos.getAllInBoxMutable(realX - 1, minY, realZ - 1, realX + 1, maxY, realZ + 1)) {
-            double weight = LeyWebHelper.getLeyWeightForBlock(world, pos);
+            double weight = WebHelper.getLeyWeightForBlock(world, pos);
 
             double dX = pos.getX() - posX;
             double dY = pos.getY() - posY;
