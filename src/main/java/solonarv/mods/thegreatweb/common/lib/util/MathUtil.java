@@ -25,4 +25,17 @@ public class MathUtil {
     public static double normSq(double x, double y, double z) {
         return x*x + y*y + z*z;
     }
+
+    public static double maxMany(double... xs) {
+        if (xs.length == 0)
+            throw new IllegalArgumentException("maxMany: argument list must be nonempty");
+
+        double max = xs[0];
+        for (int i = 1; i < xs.length; i++) {
+            if (xs[i] > max)
+                max = xs[i];
+        }
+
+        return max;
+    }
 }

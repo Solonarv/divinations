@@ -20,6 +20,8 @@ public class WebData extends WorldSavedData {
 
     private ArrayList<WebNode> nodesById = new ArrayList<>();
 
+    private WebQuadTree nodeMap ;//= new WebQuadTree();
+
     private WebData() {
         super(DATA_NAME);
     }
