@@ -1,5 +1,6 @@
 package solonarv.mods.thegreatweb.common.lightweb;
 
+import com.google.common.collect.Lists;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
@@ -7,6 +8,7 @@ import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 import org.jetbrains.annotations.NotNull;
+import solonarv.mods.thegreatweb.common.lib.util.NBTHelper;
 
 import java.util.ArrayList;
 
@@ -18,9 +20,10 @@ public class WebData extends WorldSavedData {
 
     public static final float MAX_CONNECT_RADIUS = 256;
 
-    private ArrayList<WebNode> nodesById = new ArrayList<>();
+    private ArrayList<WebNode> nodesById = Lists.newArrayList();
+    private ArrayList<WebFace> facesById = Lists.newArrayList();
 
-    private WebQuadTree nodeMap ;//= new WebQuadTree();
+    private WebQuadTree nodeMap = WebQuadTree.newEmpty();
 
     private WebData() {
         super(DATA_NAME);
@@ -41,20 +44,26 @@ public class WebData extends WorldSavedData {
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
-        NBTTagList nodeData = nbt.getTagList("nodes", Constants.NBT.TAG_COMPOUND);
-        int length = nodeData.tagCount();
-        nodesById.ensureCapacity(length);
-        for (int i = 0; i < length; i++) {
-            nodesById.set(i, WebNode.fromNBT(this, nodeData.getCompoundTagAt(i)));
-        }
+        NBTHelper.deserializeListWith(nbt.getTagList("nodes", Constants.NBT.TAG_COMPOUND),
+            data -> WebNode.fromNBT(this, data),
+            nodesById,
+            nodeMap::addNode);
+
+        NBTHelper.deserializeListWith(nbt.getTagList("faces", Constants.NBT.TAG_COMPOUND),
+            data -> WebFace.fromNBT(this, data),
+            facesById,
+            nodeMap::addFace);
     }
 
+    @NotNull
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-        return null;
+    public NBTTagCompound writeToNBT(@NotNull NBTTagCompound compound) {
+        compound.setTag("nodes", NBTHelper.writeMany(nodesById, WebNode::serializeNBT));
+        compound.setTag("faces", NBTHelper.writeMany(facesById, WebFace::serializeNBT));
+        return compound;
     }
 
-    public WebNode getNodeByID(int id) {
+    WebNode getNodeByID(int id) {
         return id < nodesById.size() ? nodesById.get(id) : null;
     }
 }
