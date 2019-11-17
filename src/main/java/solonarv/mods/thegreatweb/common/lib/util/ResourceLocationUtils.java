@@ -4,6 +4,7 @@ import net.minecraft.util.ResourceLocation;
 import solonarv.mods.thegreatweb.common.constants.Misc;
 
 public class ResourceLocationUtils {
+    private ResourceLocationUtils(){}
     public static ResourceLocation resourceLocationWithDefaultDomain(String s){
         String[] split = s.split(":", 2);
         if (split.length < 2) {

@@ -2,10 +2,10 @@ package solonarv.mods.thegreatweb.common.network;
 
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import net.minecraftforge.fml.relauncher.Side;
 import solonarv.mods.thegreatweb.common.TheGreatWeb;
 
 public class PacketHandler {
+    private PacketHandler(){}
     private static int packetID = 0;
 
     public static SimpleNetworkWrapper channel = null;
@@ -20,7 +20,7 @@ public class PacketHandler {
     }
 
     public static void registerPackets() {
-        TheGreatWeb.logger.info("registering packets!");
+        TheGreatWeb.logger().info("registering packets!");
     }
 
 

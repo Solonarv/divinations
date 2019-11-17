@@ -15,10 +15,10 @@ public class TheGreatWeb {
     @Mod.Instance(Misc.MOD_ID)
     public static TheGreatWeb instance;
 
-    public static Logger logger;
+    private Logger logger;
 
     @SidedProxy(serverSide = Misc.PROXY_SERVER, clientSide =  Misc.PROXY_CLIENT)
-    public static CommonProxy proxy;
+    private static CommonProxy proxy;
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -29,5 +29,9 @@ public class TheGreatWeb {
     @EventHandler
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
+    }
+
+    public static Logger logger(){
+        return instance.logger;
     }
 }

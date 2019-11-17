@@ -5,6 +5,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 
 public class MathUtil {
+    private MathUtil(){}
     public static Vec3i geometricCenter(Vec3i... vectors) {
         Vec3d result = Vec3d.ZERO;
         for (Vec3i vector : vectors) {
@@ -19,7 +20,7 @@ public class MathUtil {
     }
 
     public static int nextLowestPowerOf2(int x) {
-        return (int) Math.pow(2, Math.floor(MathHelper.log2(x)));
+        return (int) Math.pow(2, MathHelper.log2(x));
     }
 
     public static double normSq(double x, double y, double z) {

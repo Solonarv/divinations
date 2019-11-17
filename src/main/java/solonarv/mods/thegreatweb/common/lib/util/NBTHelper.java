@@ -4,15 +4,15 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.Vec3d;
-import solonarv.mods.thegreatweb.common.lightweb.WebFace;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class NBTHelper {
+    private NBTHelper(){}
+
     @Nonnull
     public static Vec3d getVec3d(NBTTagCompound compound, String keyTemplate) {
         return new Vec3d(

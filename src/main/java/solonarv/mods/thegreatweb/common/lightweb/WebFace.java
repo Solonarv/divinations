@@ -4,7 +4,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class WebFace implements INBTSerializable<NBTTagCompound> {
     WebNode node1, node2, node3;
@@ -76,6 +75,6 @@ public class WebFace implements INBTSerializable<NBTTagCompound> {
 
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
-
+        // TODO implement
     }
 }
