@@ -31,7 +31,10 @@ See also the license below.
  
 ### License
 
-The MIT License. See [LICENSE](LICENSE) for details.
+All code in this repository is subject to the GNU General Public License.
+See [COPYING](COPYING) for details. Note: previous versions of this work were released
+under the MIT license. For any parts of this work subject to both MIT and GPL (because they are present in
+an older MIT-licensed and a newer GPL-licensed version), you may choose which of these licenses to apply.
 
 ### Modpack permissions
 
