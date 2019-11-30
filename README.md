@@ -31,10 +31,14 @@ See also the license below.
  
 ### License
 
-All code in this repository is subject to the GNU General Public License.
-See [COPYING](COPYING) for details. Note: previous versions of this work were released
-under the MIT license. For any parts of this work subject to both MIT and GPL (because they are present in
-an older MIT-licensed and a newer GPL-licensed version), you may choose which of these licenses to apply.
+All code in this repository is subject to the GNU Lesser General Public License, version 3 (LGPLv3).
+See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for the full license text.
+
+Note: previous versions of this work were released under the MIT license. For any parts of this work subject to both MIT and LGPL (because they are present in an older MIT-licensed and a newer LGPL-licensed version), you may choose which of these licenses to apply. To find out what code this clause applies to, use the `git` tool to compare the code's modified date to the date of the license change.
+
+Non-code assets are released under [Creative Commons - Attribution - Share Alike 4.0](CC-BY-SA-4.0.txt). Non-code assets consist of any files in the `src/main/resources` subdirectory, as well as any files with a MIME type matching `image/*`, `audio/*`, `video/*` or `application/ogg`.
+
+`gradle/wrapper/gradle-wrapper.jar`, `gradlew` and `gradlew.bat` are (c) Gradle Inc. and not subject to the above licenses. For more information about their licensing, visit <https://gradle.org>.
 
 ### Modpack permissions
 
